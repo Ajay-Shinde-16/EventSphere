@@ -10,12 +10,12 @@ const CAT_CONFIG = {
   Food:     { color:'#FFB300', emoji:'🍽️', img:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=70' },
   Art:      { color:'#FF4081', emoji:'🎨', img:'https://images.unsplash.com/photo-1541367777708-7905fe3296c4?w=800&q=70' },
   Business: { color:'#4FC3F7', emoji:'💼', img:'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=70' },
-  Other:    { color:'#8892A4', emoji:'⭐', img:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=70' },
+  Other:    { color:'var(--muted)', emoji:'⭐', img:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=70' },
 };
 
 function getSeatLabel(num, tiers) {
   if (!num || !tiers?.length) return String(num);
-  const COLS = 20, ROWS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const COLS = 30, ROWS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const order = ['VIP','Premium','Gold','Silver','General','Standard','Economy'];
   const sorted = [...tiers].sort((a,b)=>{
     const ai=order.findIndex(t=>a.name.toLowerCase().includes(t.toLowerCase()));
@@ -81,7 +81,7 @@ function ScannedTicketModal({ booking, onClose }) {
                   ].map((d,i)=>(
                     <div key={i}>
                       <div style={{ fontSize:8,fontWeight:700,color:`${cat.color}80`,letterSpacing:2,marginBottom:2,fontFamily:"'Space Grotesk',sans-serif" }}>{d.icon} {d.label}</div>
-                      <div style={{ fontSize:12,fontWeight:600,color:'#E2E8F0' }}>{d.val}</div>
+                      <div style={{ fontSize:12,fontWeight:600,color:'var(--text)' }}>{d.val}</div>
                     </div>
                   ))}
                 </div>

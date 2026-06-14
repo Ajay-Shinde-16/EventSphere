@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 /* ── Convert raw seat number to label like A-01, B-10 ───────── */
 function getSeatLabel(num, tiers) {
   if (!num || !tiers?.length) return String(num);
-  const COLS = 20;
+  const COLS = 30;
   const ROWS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const order = ['VIP','Premium','Gold','Silver','General','Standard','Economy'];
   const sorted = [...tiers].sort((a,b) => {
@@ -42,7 +42,7 @@ const CAT_CONFIG = {
   Food:     { color:'#FFB300', dark:'#1F1400', emoji:'🍽️', img:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80', label:'FOOD & DINING' },
   Art:      { color:'#FF4081', dark:'#1F0B14', emoji:'🎨', img:'https://images.unsplash.com/photo-1541367777708-7905fe3296c4?w=900&q=80', label:'ART & CULTURE' },
   Business: { color:'#4FC3F7', dark:'#0B1520', emoji:'💼', img:'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&q=80', label:'CONFERENCE' },
-  Other:    { color:'#8892A4', dark:'#111827', emoji:'⭐', img:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900&q=80', label:'EVENT' },
+  Other:    { color:'var(--muted)', dark:'#111827', emoji:'⭐', img:'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900&q=80', label:'EVENT' },
 };
 
 /* ── Ticket Modal ────────────────────────────────────────────── */
@@ -113,7 +113,7 @@ function TicketModal({ bk, onClose, onDownload }) {
                   ].map((d,i) => (
                     <div key={i}>
                       <div style={{ fontSize:9, fontWeight:700, color:`${cat.color}99`, letterSpacing:2, marginBottom:3, fontFamily:"'Space Grotesk',sans-serif" }}>{d.icon} {d.label}</div>
-                      <div style={{ fontSize:13, fontWeight:600, color:'#E2E8F0' }}>{d.val}</div>
+                      <div style={{ fontSize:13, fontWeight:600, color:'var(--text)' }}>{d.val}</div>
                     </div>
                   ))}
                 </div>
@@ -272,7 +272,7 @@ async function downloadTicketPNG(bk) {
   ctx.fillText('CONFIRMED ✓', 195 - ctx.measureText('CONFIRMED ✓').width/2, 166);
 
   // Details
-  ctx.font = '500 15px Arial, sans-serif'; ctx.fillStyle = '#8892A4';
+  ctx.font = '500 15px Arial, sans-serif'; ctx.fillStyle = 'var(--muted)';
   const dateStr = bk.event?.date ? new Date(bk.event.date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '';
   ctx.fillText(`📅  ${dateStr}`, 50, 215);
   ctx.fillText(`⏰  ${bk.event?.time || ''}`, 50, 245);
@@ -281,7 +281,7 @@ async function downloadTicketPNG(bk) {
   if (bk.seatNumbers?.length) {
     ctx.fillStyle = cat.color; ctx.font = '700 15px Arial, sans-serif';
     ctx.fillText(`SEAT: ${getSeatLabels(bk.seatNumbers, bk.event?.tiers)}`, 50, 330);
-    ctx.fillStyle = '#8892A4'; ctx.font = '500 15px Arial, sans-serif';
+    ctx.fillStyle = 'var(--muted)'; ctx.font = '500 15px Arial, sans-serif';
   }
 
   // Code box
@@ -299,7 +299,7 @@ async function downloadTicketPNG(bk) {
   ctx.font = `900 ${bk.totalAmount > 99999 ? 32 : 40}px Arial, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(bk.totalAmount === 0 ? 'FREE' : '₹' + bk.totalAmount?.toLocaleString(), 1010, 120);
-  ctx.font = '600 13px Arial, sans-serif'; ctx.fillStyle = '#8892A4';
+  ctx.font = '600 13px Arial, sans-serif'; ctx.fillStyle = 'var(--muted)';
   ctx.fillText(`${bk.seats} Seat${bk.seats>1?'s':''}`, 1010, 148);
 
   // QR
@@ -337,15 +337,15 @@ function CertificateGenerator({ booking }) {
     ctx.strokeStyle=grad; ctx.lineWidth=4; ctx.strokeRect(10,10,880,600);
     ctx.strokeStyle='rgba(0,242,254,0.2)'; ctx.lineWidth=1; ctx.strokeRect(20,20,860,580);
     ctx.textAlign='center';
-    ctx.fillStyle='#8892A4'; ctx.font='13px sans-serif'; ctx.fillText('EVENTSPHERE — CERTIFICATE OF ATTENDANCE',450,70);
-    ctx.fillStyle='#E2E8F0'; ctx.font='bold 15px sans-serif'; ctx.fillText('This is to certify that',450,130);
+    ctx.fillStyle='var(--muted)'; ctx.font='13px sans-serif'; ctx.fillText('EVENTSPHERE — CERTIFICATE OF ATTENDANCE',450,70);
+    ctx.fillStyle='var(--text)'; ctx.font='bold 15px sans-serif'; ctx.fillText('This is to certify that',450,130);
     ctx.fillStyle='#00F2FE'; ctx.font='bold 38px sans-serif'; ctx.fillText(booking.user?.name||'Attendee',450,190);
-    ctx.fillStyle='#E2E8F0'; ctx.font='15px sans-serif'; ctx.fillText('successfully attended',450,235);
+    ctx.fillStyle='var(--text)'; ctx.font='15px sans-serif'; ctx.fillText('successfully attended',450,235);
     ctx.fillStyle='#9B51E0'; ctx.font='bold 24px sans-serif'; ctx.fillText(booking.event?.title||'Event',450,288);
-    ctx.fillStyle='#8892A4'; ctx.font='12px sans-serif'; ctx.fillText(`Booking: ${booking.bookingCode}  |  Tier: ${booking.tier}`,450,335);
+    ctx.fillStyle='var(--muted)'; ctx.font='12px sans-serif'; ctx.fillText(`Booking: ${booking.bookingCode}  |  Tier: ${booking.tier}`,450,335);
     ctx.fillStyle='#05FF9B'; ctx.font='bold 12px sans-serif'; ctx.fillText('✓ VERIFIED ATTENDANCE',450,385);
     ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fillRect(160,500,200,1); ctx.fillRect(540,500,200,1);
-    ctx.fillStyle='#8892A4'; ctx.font='11px sans-serif'; ctx.fillText('Event Organizer',260,520); ctx.fillText('EventSphere Platform',640,520);
+    ctx.fillStyle='var(--muted)'; ctx.font='11px sans-serif'; ctx.fillText('Event Organizer',260,520); ctx.fillText('EventSphere Platform',640,520);
     const link = document.createElement('a');
     link.download=`Certificate_${booking.bookingCode}.png`; link.href=canvas.toDataURL(); link.click();
   };

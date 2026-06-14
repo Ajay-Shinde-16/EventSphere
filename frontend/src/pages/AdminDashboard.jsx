@@ -4,7 +4,48 @@ import { getAdminStats, getAdminEvents, updateEventStatus, getAdminUsers, toggle
 import { useAuth } from '../context/AuthContext';
 
 const statusColor = { approved:'#05FF9B', pending:'#FFB300', rejected:'#FF4081' };
-const CC = { Tech:'#00F2FE', Music:'#9B51E0', Sports:'#05FF9B', Food:'#FFB300', Art:'#FF4081', Business:'#4FC3F7', Other:'#8892A4' };
+
+/* ── CSV Export ─────────────────────────────────────────────── */
+function exportBookingsCSV(bookings) {
+  const rows = [['Booking Code','Attendee','Email','Event','Category','Date','City','Tier','Seats','Seat Numbers','Amount','Status','Checked In']];
+  bookings.forEach(b => {
+    rows.push([
+      b.bookingCode||'',
+      b.user?.name||'',
+      b.user?.email||'',
+      b.event?.title||'',
+      b.event?.category||'',
+      b.event?.date ? new Date(b.event.date).toLocaleDateString('en-IN') : '',
+      b.event?.city||'',
+      b.tier||'',
+      b.seats||0,
+      (b.seatNumbers||[]).join('|'),
+      b.totalAmount||0,
+      b.status||'',
+      b.checkedIn ? 'Yes' : 'No',
+    ]);
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `EventSphere_Admin_Bookings_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+function exportUsersCSV(users) {
+  const rows = [['Name','Email','Role','City','Phone','Status','Joined']];
+  users.forEach(u => {
+    rows.push([u.name||'', u.email||'', u.role||'', u.city||'', u.phone||'', u.isActive?'Active':'Deactivated', u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : '']);
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `EventSphere_Users_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+const CC = { Tech:'#00F2FE', Music:'#9B51E0', Sports:'#05FF9B', Food:'#FFB300', Art:'#FF4081', Business:'#4FC3F7', Other:'var(--muted)' };
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState('events');
@@ -75,7 +116,7 @@ export default function AdminDashboard() {
           </div>
           <div>
             <div className="font-grotesk font-black text-xs" style={{ color:'#FF4081' }}>Admin Portal</div>
-            <div className="font-jakarta text-xs" style={{ color:'#8892A4',fontSize:'0.6rem' }}>Full Control</div>
+            <div className="font-jakarta text-xs" style={{ color:'var(--muted)',fontSize:'0.6rem' }}>Full Control</div>
           </div>
         </div>
         {[
@@ -92,8 +133,8 @@ export default function AdminDashboard() {
 
       <div className="flex-1 p-6 md:p-8" style={{ minWidth: 0 }}>
         <div className="pgh mb-6">
-          <h2 className="font-grotesk font-black text-xl mb-1"><i className="bi bi-shield-check me-2" style={{ color:'#FF4081' }} />Admin Dashboard</h2>
-          <p className="font-jakarta text-sm" style={{ color:'#8892A4' }}>Platform control center</p>
+          <h2 className="font-grotesk font-black text-xl mb-1" style={{ color:'var(--heading)' }}><i className="bi bi-shield-check me-2" style={{ color:'#FF4081' }} />Admin Dashboard</h2>
+          <p className="font-jakarta text-sm" style={{ color:'var(--muted)' }}>Platform control center</p>
         </div>
 
         {/* Stats */}
@@ -107,7 +148,7 @@ export default function AdminDashboard() {
           ].map((s,i) => (
             <div key={i} className="stat-card">
               <div className="font-grotesk font-black text-2xl" style={{ color:s.c }}>{s.n ?? '—'}</div>
-              <div className="font-jakarta text-xs mt-1" style={{ color:'#8892A4' }}>{s.l}</div>
+              <div className="font-jakarta text-xs mt-1" style={{ color:'var(--muted)' }}>{s.l}</div>
             </div>
           ))}
         </div>
@@ -127,22 +168,22 @@ export default function AdminDashboard() {
                 <button key={f} className={`cat-pill ${evFilter===f?'active':''}`} onClick={() => setEvFilter(f)}>{f.charAt(0).toUpperCase()+f.slice(1)}</button>
               ))}
             </div>
-            <div className="rounded-2xl overflow-hidden" style={{ background:'#171E2E',border:'1px solid rgba(255,255,255,0.06)' }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background:'var(--card-bg)',border:'1px solid var(--border)' }}>
               <div className="overflow-x-auto">
                 <table>
                   <thead><tr><th>Event</th><th>Organizer</th><th>Date</th><th>City</th><th>Status</th><th>Actions</th></tr></thead>
                   <tbody>
                     {events.length === 0 ? (
-                      <tr><td colSpan="6" style={{ textAlign:'center',padding:32,color:'#8892A4' }}>No {evFilter} events</td></tr>
+                      <tr><td colSpan="6" style={{ textAlign:'center',padding:32,color:'var(--muted)' }}>No {evFilter} events</td></tr>
                     ) : events.map(ev => (
                       <tr key={ev._id}>
                         <td>
                           <div className="font-grotesk font-bold text-sm">{ev.title}</div>
                           <span style={{ display:'inline-block',padding:'2px 8px',borderRadius:20,fontSize:'0.6rem',fontWeight:700,background:`${CC[ev.category]}15`,color:CC[ev.category],marginTop:3 }}>{ev.category}</span>
                         </td>
-                        <td style={{ color:'#8892A4',fontSize:12 }}>{ev.organizer?.name}</td>
-                        <td style={{ color:'#8892A4',fontSize:12 }}>{new Date(ev.date).toLocaleDateString('en-IN')}</td>
-                        <td style={{ color:'#8892A4',fontSize:12 }}>{ev.city}</td>
+                        <td style={{ color:'var(--muted)',fontSize:12 }}>{ev.organizer?.name}</td>
+                        <td style={{ color:'var(--muted)',fontSize:12 }}>{new Date(ev.date).toLocaleDateString('en-IN')}</td>
+                        <td style={{ color:'var(--muted)',fontSize:12 }}>{ev.city}</td>
                         <td><span style={{ padding:'3px 10px',borderRadius:20,fontSize:'0.65rem',fontWeight:700,background:`${statusColor[ev.status]}15`,color:statusColor[ev.status] }}>{ev.status}</span></td>
                         <td>
                           <div className="flex gap-2">
@@ -161,7 +202,16 @@ export default function AdminDashboard() {
 
         {/* Users tab */}
         {tab === 'users' && (
-          <div className="rounded-2xl overflow-hidden" style={{ background:'#171E2E',border:'1px solid rgba(255,255,255,0.06)' }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background:'var(--card-bg)',border:'1px solid var(--border)' }}>
+            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid var(--border)' }}>
+              <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:13,color:'var(--purple)',display:'flex',alignItems:'center',gap:8 }}>
+                <i className="bi bi-people"/>All Users ({users.length})
+              </span>
+              <button onClick={()=>exportUsersCSV(users)}
+                style={{ padding:'7px 16px',borderRadius:10,fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:11,background:'rgba(155,81,224,0.08)',color:'var(--purple)',border:'1px solid rgba(155,81,224,0.2)',cursor:'pointer',display:'flex',alignItems:'center',gap:6 }}>
+                <i className="bi bi-download"/>Export CSV
+              </button>
+            </div>
             <div className="overflow-x-auto">
               <table>
                 <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead>
@@ -169,11 +219,11 @@ export default function AdminDashboard() {
                   {users.map(u => (
                     <tr key={u._id}>
                       <td><div className="font-grotesk font-bold text-sm">{u.name}</div></td>
-                      <td style={{ color:'#8892A4',fontSize:12 }}>{u.email}</td>
+                      <td style={{ color:'var(--muted)',fontSize:12 }}>{u.email}</td>
                       <td>
                         <span style={{ padding:'3px 10px',borderRadius:20,fontSize:'0.65rem',fontWeight:700,background:u.role==='admin'?'rgba(255,64,129,0.1)':u.role==='organizer'?'rgba(155,81,224,0.1)':'rgba(0,242,254,0.1)',color:u.role==='admin'?'#FF4081':u.role==='organizer'?'#9B51E0':'#00F2FE' }}>{u.role}</span>
                       </td>
-                      <td style={{ color:'#8892A4',fontSize:12 }}>{new Date(u.createdAt).toLocaleDateString('en-IN')}</td>
+                      <td style={{ color:'var(--muted)',fontSize:12 }}>{new Date(u.createdAt).toLocaleDateString('en-IN')}</td>
                       <td><span style={{ padding:'3px 10px',borderRadius:20,fontSize:'0.65rem',fontWeight:700,background:u.isActive?'rgba(5,255,155,0.1)':'rgba(255,64,129,0.1)',color:u.isActive?'#05FF9B':'#FF4081' }}>{u.isActive?'Active':'Deactivated'}</span></td>
                       <td>
                         <button style={{ padding:'4px 10px',borderRadius:8,fontSize:'0.7rem',fontWeight:700,background:u.isActive?'rgba(255,64,129,0.1)':'rgba(5,255,155,0.1)',color:u.isActive?'#FF4081':'#05FF9B',border:`1px solid ${u.isActive?'rgba(255,64,129,0.2)':'rgba(5,255,155,0.2)'}`,cursor:'pointer' }} onClick={() => handleToggleUser(u._id)}>
@@ -190,7 +240,16 @@ export default function AdminDashboard() {
 
         {/* Bookings tab */}
         {tab === 'bookings' && (
-          <div className="rounded-2xl overflow-hidden" style={{ background:'#171E2E',border:'1px solid rgba(255,255,255,0.06)' }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background:'var(--card-bg)',border:'1px solid var(--border)' }}>
+            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 20px',borderBottom:'1px solid var(--border)' }}>
+              <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:13,color:'var(--cyan)',display:'flex',alignItems:'center',gap:8 }}>
+                <i className="bi bi-ticket"/>All Bookings ({bookings.length})
+              </span>
+              <button onClick={()=>exportBookingsCSV(bookings)}
+                style={{ padding:'7px 16px',borderRadius:10,fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:11,background:'rgba(5,255,155,0.08)',color:'var(--mint)',border:'1px solid rgba(5,255,155,0.2)',cursor:'pointer',display:'flex',alignItems:'center',gap:6 }}>
+                <i className="bi bi-download"/>Export CSV
+              </button>
+            </div>
             <div className="overflow-x-auto">
               <table>
                 <thead><tr><th>Code</th><th>User</th><th>Event</th><th>Tier</th><th>Seats</th><th>Amount</th><th>Status</th></tr></thead>
@@ -198,10 +257,10 @@ export default function AdminDashboard() {
                   {bookings.map(b => (
                     <tr key={b._id}>
                       <td><span style={{ fontFamily:'monospace',color:'#00F2FE',fontSize:12,fontWeight:700 }}>{b.bookingCode}</span></td>
-                      <td style={{ color:'#8892A4',fontSize:12 }}>{b.user?.name}</td>
+                      <td style={{ color:'var(--muted)',fontSize:12 }}>{b.user?.name}</td>
                       <td style={{ fontSize:12 }}>{b.event?.title}</td>
                       <td style={{ color:'#9B51E0',fontSize:12 }}>{b.tier}</td>
-                      <td style={{ color:'#8892A4',fontSize:12,textAlign:'center' }}>{b.seats}</td>
+                      <td style={{ color:'var(--muted)',fontSize:12,textAlign:'center' }}>{b.seats}</td>
                       <td style={{ color:'#00F2FE',fontSize:12,fontWeight:700 }}>{b.totalAmount===0?'FREE':'₹'+b.totalAmount?.toLocaleString()}</td>
                       <td><span style={{ padding:'3px 10px',borderRadius:20,fontSize:'0.65rem',fontWeight:700,background:b.status==='confirmed'?'rgba(5,255,155,0.1)':'rgba(255,64,129,0.1)',color:b.status==='confirmed'?'#05FF9B':'#FF4081' }}>{b.status}</span></td>
                     </tr>

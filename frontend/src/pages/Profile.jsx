@@ -6,253 +6,159 @@ import { updateProfile } from '../services/api';
 export default function Profile() {
   const { user, setUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    name: user?.name || '',
-    phone: user?.phone || '',
-    city: user?.city || '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const [form, setForm] = useState({ name: user?.name||'', phone: user?.phone||'', city: user?.city||'' });
+  const [saving, setSaving]   = useState(false);
+  const [saved, setSaved]     = useState(false);
+  const [error, setError]     = useState('');
 
   const handleSubmit = async e => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
+    e.preventDefault(); setSaving(true); setError('');
     try {
       const res = await updateProfile(form);
       setUser(res.data);
       localStorage.setItem('eventsphere_user', JSON.stringify(res.data));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
-    } finally {
-      setSaving(false);
-    }
+      setSaved(true); setTimeout(()=>setSaved(false), 3000);
+    } catch (err) { setError(err.response?.data?.message||'Update failed'); }
+    finally { setSaving(false); }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const initials = (user?.name?.split(' ').filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2) || ['U']).join('');
+  const roleColors = { admin:'#F472B6', organizer:'#FBBF24', attendee:'#38BDF8' };
+  const roleColor = roleColors[user?.role] || '#38BDF8';
+  const roleColorCss = { admin:'var(--pink)', organizer:'var(--amber)', attendee:'var(--cyan)' }[user?.role]||'var(--cyan)';
+  const roleLabel = { admin:'Admin', organizer:'Organizer', attendee:'Attendee' }[user?.role]||'Attendee';
+
+  const card = {
+    background:'var(--card-bg)', border:'1px solid var(--border)',
+    borderRadius:20, padding:28, marginBottom:20, boxShadow:'var(--shadow)',
+  };
+  const label = {
+    display:'block', fontSize:12, fontWeight:600,
+    color:'var(--muted)', marginBottom:6,
+  };
+  const input = {
+    width:'100%', background:'var(--input-bg)', border:'1.5px solid var(--border)',
+    color:'var(--heading)', padding:'12px 16px', borderRadius:12,
+    fontSize:14, fontFamily:"'Plus Jakarta Sans',sans-serif",
+    outline:'none', transition:'all 0.2s',
   };
 
-  const getRoleBadge = () => {
-    if (user?.role === 'admin') return { label: 'Admin', color: 'text-purple-400 bg-purple-400/10 border-purple-400/30' };
-    if (user?.role === 'organizer') return { label: 'Organizer', color: 'text-amber-400 bg-amber-400/10 border-amber-400/30' };
-    return { label: 'Attendee', color: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/30' };
-  };
-
-  const badge = getRoleBadge();
-  const initials = user?.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+  const navLinks = [
+    user?.role==='attendee' && { to:'/my-tickets', icon:'bi-ticket-perforated', label:'My Tickets', sub:'View bookings', color:'var(--cyan)' },
+    user?.role==='organizer' && { to:'/org-dashboard', icon:'bi-speedometer2', label:'Dashboard', sub:'Manage events', color:'var(--purple)' },
+    user?.role==='organizer' && { to:'/create-event', icon:'bi-plus-circle', label:'Create Event', sub:'Add new event', color:'var(--cyan)' },
+    user?.role==='admin' && { to:'/admin', icon:'bi-shield-fill', label:'Admin Panel', sub:'Control center', color:'var(--pink)' },
+    user?.role==='admin' && { to:'/org-dashboard', icon:'bi-people-fill', label:'Manage Events', sub:'Review & approve', color:'var(--purple)' },
+    { to:'/', icon:'bi-house', label:'Home', sub:'Browse events', color:'var(--muted)' },
+  ].filter(Boolean);
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div style={{ minHeight:'100vh', background:'var(--bg)', padding:'80px 16px 40px' }}>
+      <div style={{ maxWidth:600, margin:'0 auto' }}>
 
-        {/* Header */}
-        <div className="glass rounded-2xl p-8 mb-6 text-center border border-white/5">
-          {/* Avatar */}
-          <div className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold relative"
-            style={{ background: 'linear-gradient(135deg, #00F2FE22, #9B51E022)', border: '2px solid #00F2FE44' }}>
-            <span style={{ color: 'var(--cyan)' }}>{initials}</span>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 border-2 border-[#0B0F19]" />
+        {/* Avatar card */}
+        <div style={{ ...card, textAlign:'center' }}>
+          <div style={{ position:'relative', width:80, height:80, margin:'0 auto 16px' }}>
+            <div style={{ width:80, height:80, borderRadius:'50%', background:`linear-gradient(135deg, ${roleColor}, ${roleColor}99)`, border:`3px solid ${roleColor}`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:26, color:'#fff', boxShadow:`0 4px 20px ${roleColor}40` }}>
+              {initials}
+            </div>
+            <div style={{ position:'absolute', bottom:2, right:2, width:16, height:16, borderRadius:'50%', background:'#22C55E', border:'3px solid var(--card-bg)' }}/>
           </div>
-
-          <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            {user?.name}
-          </h1>
-          <p className="text-muted text-sm mb-3">{user?.email}</p>
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${badge.color}`}>
-            <i className={`bi ${user?.role === 'admin' ? 'bi-shield-fill' : user?.role === 'organizer' ? 'bi-person-workspace' : 'bi-person-fill'}`} />
-            {badge.label}
+          <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.4rem', color:'var(--heading)', marginBottom:4 }}>{user?.name}</h1>
+          <p style={{ color:'var(--muted)', fontSize:13, marginBottom:12 }}>{user?.email}</p>
+          <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 14px', borderRadius:20, fontSize:12, fontWeight:700, background:`${roleColor}22`, color:roleColor, border:`1px solid ${roleColor}55` }}>
+            <i className={`bi ${user?.role==='admin'?'bi-shield-fill':user?.role==='organizer'?'bi-person-workspace':'bi-person-fill'}`}/>
+            {roleLabel}
           </span>
         </div>
 
-        {/* Edit Form */}
-        <div className="glass rounded-2xl p-8 mb-6 border border-white/5">
-          <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <i className="bi bi-pencil-square" style={{ color: 'var(--cyan)' }} />
-            Edit Profile
+        {/* Edit form */}
+        <div style={card}>
+          <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1rem', color:'var(--heading)', marginBottom:20, display:'flex', alignItems:'center', gap:8 }}>
+            <i className="bi bi-pencil-square" style={{ color:'var(--cyan)' }}/> Edit Profile
           </h2>
 
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            <div style={{ marginBottom:16, padding:'12px 16px', borderRadius:12, background:'rgba(244,114,182,0.08)', border:'1px solid rgba(244,114,182,0.25)', color:'var(--pink)', fontSize:13 }}>
               {error}
             </div>
           )}
           {saved && (
-            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2">
-              <i className="bi bi-check-circle-fill" /> Profile updated successfully!
+            <div style={{ marginBottom:16, padding:'12px 16px', borderRadius:12, background:'rgba(52,211,153,0.08)', border:'1px solid rgba(52,211,153,0.25)', color:'var(--mint)', fontSize:13, display:'flex', alignItems:'center', gap:8 }}>
+              <i className="bi bi-check-circle-fill"/> Profile updated successfully!
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm text-muted mb-2">Full Name</label>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom:16 }}>
+              <label style={label}>Full Name</label>
               <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.08)', '--tw-ring-color': '#00F2FE' }}
+                style={input} type="text" name="name"
+                value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required
+                onFocus={e=>e.target.style.borderColor='var(--cyan)'}
+                onBlur={e=>e.target.style.borderColor='var(--border)'}
               />
             </div>
-
-            <div>
-              <label className="block text-sm text-muted mb-2">Phone Number</label>
+            <div style={{ marginBottom:16 }}>
+              <label style={label}>Phone Number</label>
               <input
-                type="tel"
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="+91 XXXXX XXXXX"
-                className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.08)', '--tw-ring-color': '#00F2FE' }}
+                style={input} type="tel" name="phone" placeholder="+91 XXXXX XXXXX"
+                value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}
+                onFocus={e=>e.target.style.borderColor='var(--cyan)'}
+                onBlur={e=>e.target.style.borderColor='var(--border)'}
               />
             </div>
-
-            <div>
-              <label className="block text-sm text-muted mb-2">City</label>
+            <div style={{ marginBottom:16 }}>
+              <label style={label}>City</label>
               <input
-                type="text"
-                name="city"
-                value={form.city}
-                onChange={handleChange}
-                placeholder="Bangalore, Mumbai, Delhi..."
-                className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none focus:ring-2 transition-all"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.08)', '--tw-ring-color': '#00F2FE' }}
+                style={input} type="text" name="city" placeholder="Bangalore, Mumbai, Delhi..."
+                value={form.city} onChange={e=>setForm({...form,city:e.target.value})}
+                onFocus={e=>e.target.style.borderColor='var(--cyan)'}
+                onBlur={e=>e.target.style.borderColor='var(--border)'}
               />
             </div>
-
-            <div>
-              <label className="block text-sm text-muted mb-2">Email Address</label>
+            <div style={{ marginBottom:24 }}>
+              <label style={label}>Email Address</label>
               <input
-                type="email"
-                value={user?.email}
-                disabled
-                className="w-full px-4 py-3 rounded-xl text-muted text-sm cursor-not-allowed"
-                style={{ background: 'var(--surface)', border: '1px solid rgba(255,255,255,0.05)' }}
+                style={{ ...input, opacity:0.6, cursor:'not-allowed' }}
+                type="email" value={user?.email} disabled
               />
-              <p className="text-xs text-muted mt-1">Email cannot be changed</p>
+              <p style={{ fontSize:11, color:'var(--muted)', marginTop:4 }}>Email cannot be changed</p>
             </div>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: saving ? '#333' : 'linear-gradient(135deg, #00F2FE, #0099CC)', color: '#0B0F19' }}
-            >
-              {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <i className="bi bi-arrow-repeat animate-spin" /> Saving...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <i className="bi bi-check2" /> Save Changes
-                </span>
-              )}
+            <button type="submit" disabled={saving}
+              style={{ width:'100%', padding:'13px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:14, color:'#fff', border:'none', cursor:saving?'not-allowed':'pointer', opacity:saving?0.7:1, background:'linear-gradient(135deg,var(--cyan),var(--purple))', transition:'all 0.2s' }}>
+              {saving
+                ? <span style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:8 }}><i className="bi bi-arrow-repeat" style={{ animation:'spin 0.7s linear infinite',display:'inline-block' }}/> Saving...</span>
+                : <span style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:8 }}><i className="bi bi-check2"/> Save Changes</span>}
             </button>
           </form>
         </div>
 
-        {/* Quick Navigation */}
-        <div className="glass rounded-2xl p-6 mb-6 border border-white/5">
-          <h2 className="text-sm font-semibold text-muted mb-4 uppercase tracking-wider">Quick Navigation</h2>
-          <div className="grid grid-cols-2 gap-3">
-
-            {/* My Tickets — attendees only */}
-            {user?.role === 'attendee' && (
-              <Link to="/my-tickets"
-                className="flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:scale-105"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(0,242,254,0.15)' }}>
-                <i className="bi bi-ticket-perforated text-xl" style={{ color: 'var(--cyan)' }} />
+        {/* Quick navigation */}
+        <div style={card}>
+          <h2 style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:2, marginBottom:16 }}>Quick Navigation</h2>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            {navLinks.map((link,i) => (
+              <Link key={i} to={link.to}
+                style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:14, background:'var(--surface2)', border:'1px solid var(--border)', textDecoration:'none', transition:'all 0.2s' }}
+                onMouseEnter={e=>{ e.currentTarget.style.borderColor=link.color; e.currentTarget.style.transform='translateY(-2px)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.transform=''; }}>
+                <i className={`bi ${link.icon} text-xl`} style={{ color:link.color, fontSize:20 }}/>
                 <div>
-                  <div className="text-sm font-semibold" style={{ color: 'var(--heading)' }}>My Tickets</div>
-                  <div className="text-xs" style={{ color: 'var(--muted)' }}>View bookings</div>
+                  <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:13, color:'var(--heading)' }}>{link.label}</div>
+                  <div style={{ fontSize:11, color:'var(--muted)', marginTop:1 }}>{link.sub}</div>
                 </div>
               </Link>
-            )}
-
-            {/* Organizer Dashboard */}
-            {user?.role === 'organizer' && (
-              <Link to="/org-dashboard"
-                className="flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:scale-105"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(155,81,224,0.2)' }}>
-                <i className="bi bi-speedometer2 text-xl" style={{ color: 'var(--purple)' }} />
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: 'var(--heading)' }}>Dashboard</div>
-                  <div className="text-xs" style={{ color: 'var(--muted)' }}>Manage events</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Organizer — Create Event */}
-            {user?.role === 'organizer' && (
-              <Link to="/create-event"
-                className="flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:scale-105"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(0,242,254,0.15)' }}>
-                <i className="bi bi-plus-circle text-xl" style={{ color: 'var(--cyan)' }} />
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: 'var(--heading)' }}>Create Event</div>
-                  <div className="text-xs" style={{ color: 'var(--muted)' }}>Add new event</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Admin — Admin Panel */}
-            {user?.role === 'admin' && (
-              <Link to="/admin"
-                className="flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:scale-105"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(255,64,129,0.2)' }}>
-                <i className="bi bi-shield-fill text-xl" style={{ color: 'var(--pink)' }} />
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: 'var(--heading)' }}>Admin Panel</div>
-                  <div className="text-xs" style={{ color: 'var(--muted)' }}>Control center</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Admin — Manage Users */}
-            {user?.role === 'admin' && (
-              <Link to="/org-dashboard"
-                className="flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:scale-105"
-                style={{ background: 'var(--surface2)', border: '1px solid rgba(155,81,224,0.2)' }}>
-                <i className="bi bi-people-fill text-xl" style={{ color: 'var(--purple)' }} />
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: 'var(--heading)' }}>Manage Events</div>
-                  <div className="text-xs" style={{ color: 'var(--muted)' }}>Review & approve</div>
-                </div>
-              </Link>
-            )}
-
-            {/* Home — all roles */}
-            <Link to="/"
-              className="flex items-center gap-3 p-4 rounded-xl transition-all duration-300 hover:scale-105"
-              style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
-              <i className="bi bi-house text-xl" style={{ color: 'var(--muted)' }} />
-              <div>
-                <div className="text-sm font-semibold" style={{ color: 'var(--heading)' }}>Home</div>
-                <div className="text-xs" style={{ color: 'var(--muted)' }}>Browse events</div>
-              </div>
-            </Link>
-
+            ))}
           </div>
         </div>
 
-        {/* Danger Zone */}
-        <div className="glass rounded-2xl p-6 border border-red-500/10">
-          <h2 className="text-sm font-semibold text-red-400 mb-4 uppercase tracking-wider">Danger Zone</h2>
-          <button
-            onClick={handleLogout}
-            className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
-            style={{ background: 'rgba(255,64,129,0.1)', border: '1px solid rgba(255,64,129,0.3)', color: 'var(--pink)' }}>
-            <i className="bi bi-box-arrow-right" />
-            Sign Out of EventSphere
+        {/* Danger zone */}
+        <div style={{ ...card, border:'1px solid rgba(244,114,182,0.15)', marginBottom:0 }}>
+          <h2 style={{ fontSize:11, fontWeight:700, color:'var(--pink)', textTransform:'uppercase', letterSpacing:2, marginBottom:14 }}>Danger Zone</h2>
+          <button onClick={()=>{ logout(); navigate('/'); }}
+            style={{ width:'100%', padding:'12px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:13, background:'rgba(244,114,182,0.06)', color:'var(--pink)', border:'1px solid rgba(244,114,182,0.25)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'all 0.2s' }}>
+            <i className="bi bi-box-arrow-right"/> Sign Out of EventSphere
           </button>
         </div>
 

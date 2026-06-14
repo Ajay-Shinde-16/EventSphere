@@ -10,7 +10,7 @@ const CAT = {
   Food:     { color:'#FFB300', bg:'#1F1400', emoji:'🍽️', label:'FOOD & DINING' },
   Art:      { color:'#FF4081', bg:'#1F0B14', emoji:'🎨', label:'ART & CULTURE' },
   Business: { color:'#4FC3F7', bg:'#0B1520', emoji:'💼', label:'CONFERENCE' },
-  Other:    { color:'#8892A4', bg:'#111827', emoji:'⭐', label:'EVENT' },
+  Other:    { color:'var(--muted)', bg:'#111827', emoji:'⭐', label:'EVENT' },
 };
 
 /* ── Countdown ──────────────────────────────────────────────── */
@@ -41,7 +41,7 @@ function Countdown({ date }) {
 function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }) {
   if (!event?.tiers?.length) return null;
 
-  const COLS = 20; // seats per row
+  const COLS = 30; // seats per row
   const ROWS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   // Sort tiers: VIP first, General last
@@ -85,13 +85,13 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
 
   const tierColors = {
     VIP: '#FFB300', Premium: '#9B51E0', Gold: '#FFD700',
-    Silver: '#8892A4', General: '#00F2FE', Standard: '#4FC3F7', Economy: '#05FF9B',
+    Silver: 'var(--muted)', General: '#00F2FE', Standard: '#4FC3F7', Economy: '#05FF9B',
   };
   const getTierColor = (name) => {
     for (const [k, v] of Object.entries(tierColors)) {
       if (name.toLowerCase().includes(k.toLowerCase())) return v;
     }
-    return '#8892A4';
+    return 'var(--muted)';
   };
 
   return (
@@ -121,9 +121,9 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
             {/* Rows */}
             <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
               {rows.map(({ rowLabel, seats }) => (
-                <div key={rowLabel} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+                <div key={rowLabel} style={{ display: 'grid', gridTemplateColumns: `22px repeat(${seats.length}, 1fr)`, gap: 3, marginBottom: 5, alignItems: 'center' }}>
                   {/* Row label */}
-                  <div style={{ width: 22, height: 22, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 11, color: tColor }}>
+                  <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 11, color: tColor }}>
                     {rowLabel}
                   </div>
                   {/* Seats */}
@@ -136,7 +136,7 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
                         onClick={() => { if (!isBooked) onToggleSeat(seat.num); }}
                         title={isBooked ? `${seat.id} — Booked` : isSelected ? `${seat.id} — Selected ✓` : `${seat.id} — ${tier.name} ₹${tier.price}`}
                         style={{
-                          width: 28, height: 28, borderRadius: 5,
+                          width:'100%', height:24, borderRadius: 4,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 8, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif",
                           cursor: isBooked ? 'not-allowed' : 'pointer',
@@ -261,7 +261,7 @@ export default function EventDetail() {
   
   // Build seat info map once (num -> {label, tier, price})
   const buildSeatMap = (tiers) => {
-    const COLS = 20;
+    const COLS = 30;
     const ROWS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const order = ['VIP','Premium','Gold','Silver','General','Standard','Economy'];
     const sorted = [...(tiers||[])].sort((a,b) => {
@@ -494,7 +494,7 @@ export default function EventDetail() {
       </div>
 
       {/* ── TWO COLUMN LAYOUT ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 360px', gap:20 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isOrg ? '1fr' : '1fr 360px', gap:20 }}>
 
         {/* LEFT */}
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
@@ -587,17 +587,7 @@ export default function EventDetail() {
 
         {/* RIGHT — Booking / Organizer Panel */}
         <div>
-          {isOrg ? (
-            /* Organizer card */
-            <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:28, position:'sticky', top:86, textAlign:'center' }}>
-              <div style={{ width:64, height:64, borderRadius:16, background:'rgba(155,81,224,0.12)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', fontSize:28 }}>👔</div>
-              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1rem', color:'var(--heading)', marginBottom:10 }}>Organizer View</div>
-              <p style={{ color:'var(--muted)', fontSize:13, lineHeight:1.7, marginBottom:20 }}>You manage events, not book them. Switch to an attendee account to purchase tickets.</p>
-              <button onClick={openMap} style={{ width:'100%', padding:'11px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:12, background:'var(--surface2)', color:'var(--pink)', border:'1px solid rgba(255,64,129,0.2)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                <i className="bi bi-map-fill"/>View Venue on Maps
-              </button>
-            </div>
-          ) : (
+          {!isOrg ? (
             /* Booking panel */
             <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position:'sticky', top:86 }}>
               <div style={{ height:4, background:`linear-gradient(90deg,${cat.color},#9B51E0)` }}/>
@@ -612,8 +602,8 @@ export default function EventDetail() {
                     return (o.findIndex(t=>a.name.toLowerCase().includes(t.toLowerCase()))||99)-(o.findIndex(t=>b.name.toLowerCase().includes(t.toLowerCase()))||99);
                   }).map((tier,i) => {
                     const avail = tier.seats-(tier.bookedSeats||0);
-                    const tierColors2 = {VIP:'#FFB300',Premium:'#9B51E0',Gold:'#FFD700',Silver:'#8892A4',General:'#00F2FE',Standard:'#4FC3F7',Economy:'#05FF9B'};
-                    const tCol = Object.entries(tierColors2).find(([k])=>tier.name.toLowerCase().includes(k.toLowerCase()))?.[1]||'#8892A4';
+                    const tierColors2 = {VIP:'#FFB300',Premium:'#9B51E0',Gold:'#FFD700',Silver:'var(--muted)',General:'#00F2FE',Standard:'#4FC3F7',Economy:'#05FF9B'};
+                    const tCol = Object.entries(tierColors2).find(([k])=>tier.name.toLowerCase().includes(k.toLowerCase()))?.[1]||'var(--muted)';
                     return (
                       <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:10, marginBottom:6, background:'var(--surface2)', border:'1px solid var(--border)', opacity:avail<=0?0.5:1 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -718,7 +708,7 @@ export default function EventDetail() {
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

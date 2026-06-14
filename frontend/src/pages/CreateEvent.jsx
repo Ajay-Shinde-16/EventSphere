@@ -61,8 +61,8 @@ export default function CreateEvent() {
 
       <div className="flex-1 p-6 md:p-8" style={{ minWidth: 0 }}>
         <div className="pgh mb-6">
-          <h2 className="font-grotesk font-black text-xl mb-1"><i className="bi bi-calendar-plus me-2" style={{ color: '#00F2FE' }} />Create New Event</h2>
-          <p className="font-jakarta text-sm" style={{ color: '#8892A4' }}>Submit for admin approval to go live</p>
+          <h2 className="font-grotesk font-black text-xl mb-1" style={{ color:'var(--heading)' }}><i className="bi bi-calendar-plus me-2" style={{ color: '#00F2FE' }} />Create New Event</h2>
+          <p className="font-jakarta text-sm" style={{ color: 'var(--muted)' }}>Submit for admin approval to go live</p>
         </div>
 
         {msg && (
@@ -78,7 +78,7 @@ export default function CreateEvent() {
                   <div className="font-grotesk font-black text-sm" style={{ color: '#9B51E0' }}>
                     <i className="bi bi-stars me-2" />AI Event Suggestions
                   </div>
-                  <p className="font-jakarta text-xs mt-1" style={{ color: '#8892A4' }}>Let Claude AI auto-fill event details based on category</p>
+                  <p className="font-jakarta text-xs mt-1" style={{ color: 'var(--muted)' }}>Let Claude AI auto-fill event details based on category</p>
                 </div>
                 <button type="button" className="px-5 py-2.5 rounded-xl font-grotesk font-black text-sm text-black transition-all hover:scale-105" style={{ background: 'linear-gradient(135deg,#9B51E0,#00F2FE)', opacity: aiLoading?0.7:1 }} onClick={aiSuggest} disabled={aiLoading}>
                   {aiLoading ? <><i className="bi bi-arrow-repeat animate-spin me-2" />Generating...</> : <><i className="bi bi-magic me-2" />AI Suggest</>}
@@ -87,7 +87,7 @@ export default function CreateEvent() {
             </div>
 
             {/* Basic info */}
-            <div className="rounded-2xl p-6 mb-5" style={{ background: '#171E2E', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="rounded-2xl p-6 mb-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
               <div className="font-grotesk font-bold text-xs uppercase tracking-widest mb-5" style={{ color: '#00F2FE' }}>
                 <i className="bi bi-info-circle me-2" />Basic Information
               </div>
@@ -109,18 +109,18 @@ export default function CreateEvent() {
               </div>
               <div className="flex items-center gap-3 mt-4">
                 <input type="checkbox" id="free" checked={form.isFree} onChange={e => setForm({...form,isFree:e.target.checked})} style={{ accentColor: '#00F2FE', width: 16, height: 16 }} />
-                <label htmlFor="free" className="font-jakarta text-sm" style={{ color: '#8892A4' }}>This is a free event</label>
+                <label htmlFor="free" className="font-jakarta text-sm" style={{ color: 'var(--muted)' }}>This is a free event</label>
               </div>
             </div>
 
             {/* Ticket tiers */}
             {!form.isFree && (
-              <div className="rounded-2xl p-6 mb-5" style={{ background: '#171E2E', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="rounded-2xl p-6 mb-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
                 <div className="flex justify-between items-center mb-5">
                   <div className="font-grotesk font-bold text-xs uppercase tracking-widest" style={{ color: '#9B51E0' }}>
                     <i className="bi bi-ticket-perforated me-2" />Ticket Tiers
                   </div>
-                  <button type="button" className="px-4 py-2 rounded-xl text-xs font-grotesk font-bold transition-all" style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#8892A4' }} onClick={addTier}>+ Add Tier</button>
+                  <button type="button" className="px-4 py-2 rounded-xl text-xs font-grotesk font-bold transition-all" style={{ border: '1px solid var(--border)', color: 'var(--muted)' }} onClick={addTier}>+ Add Tier</button>
                 </div>
                 {tiers.map((tier,i) => (
                   <div key={i} className="flex gap-3 mb-3 items-start">
@@ -141,17 +141,17 @@ export default function CreateEvent() {
 
           {/* Preview panel */}
           <div>
-            <div className="rounded-2xl p-5 sticky" style={{ background: '#171E2E', border: '1px solid rgba(255,255,255,0.06)', top: '90px' }}>
-              <div className="font-grotesk font-bold text-xs uppercase tracking-widest mb-4" style={{ color: '#8892A4' }}>Preview</div>
-              <div className="rounded-xl p-4 mb-3" style={{ background: '#1E2840' }}>
+            <div className="rounded-2xl p-5 sticky" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', top: '90px' }}>
+              <div className="font-grotesk font-bold text-xs uppercase tracking-widest mb-4" style={{ color: 'var(--muted)' }}>Preview</div>
+              <div className="rounded-xl p-4 mb-3" style={{ background: 'var(--surface2)' }}>
                 <div className="font-grotesk font-black text-sm mb-1">{form.title || 'Event Title'}</div>
                 {form.category && <span style={{ padding: '2px 8px', borderRadius: 20, fontSize: '0.6rem', fontWeight: 700, background: 'rgba(0,242,254,0.1)', color: '#00F2FE' }}>{form.category}</span>}
               </div>
-              {form.date && <div className="flex items-center gap-2 text-xs font-jakarta mb-2" style={{ color: '#8892A4' }}><i className="bi bi-calendar3" style={{ color: '#00F2FE' }} />{new Date(form.date).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>}
-              {form.venue && <div className="flex items-center gap-2 text-xs font-jakarta mb-2" style={{ color: '#8892A4' }}><i className="bi bi-geo-alt" style={{ color: '#FF4081' }} />{form.venue}{form.city&&`, ${form.city}`}</div>}
+              {form.date && <div className="flex items-center gap-2 text-xs font-jakarta mb-2" style={{ color: 'var(--muted)' }}><i className="bi bi-calendar3" style={{ color: '#00F2FE' }} />{new Date(form.date).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>}
+              {form.venue && <div className="flex items-center gap-2 text-xs font-jakarta mb-2" style={{ color: 'var(--muted)' }}><i className="bi bi-geo-alt" style={{ color: '#FF4081' }} />{form.venue}{form.city&&`, ${form.city}`}</div>}
               <div className="mt-4">
                 {(form.isFree ? [{ name:'Free Entry', price:0 }] : tiers).map((t,i) => (
-                  <div key={i} className="flex justify-between py-2 text-xs font-jakarta" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#8892A4' }}>
+                  <div key={i} className="flex justify-between py-2 text-xs font-jakarta" style={{ borderBottom: '1px solid var(--border)', color: 'var(--muted)' }}>
                     <span>{t.name}</span>
                     <span style={{ color: '#00F2FE', fontWeight: 700 }}>{t.price===0?'FREE':'₹'+t.price}</span>
                   </div>

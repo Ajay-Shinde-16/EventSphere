@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getEvents } from '../services/api';
 
-const CAT_COLOR = { Tech:'#00F2FE', Music:'#9B51E0', Sports:'#05FF9B', Food:'#FFB300', Art:'#FF4081', Business:'#4FC3F7', Other:'#8892A4' };
+const CAT_COLOR = { Tech:'#00F2FE', Music:'#9B51E0', Sports:'#05FF9B', Food:'#FFB300', Art:'#FF4081', Business:'#4FC3F7', Other:'var(--muted)' };
 
 function Countdown({ date }) {
   const [t, setT] = useState({});
@@ -30,7 +30,7 @@ function Countdown({ date }) {
 function EventCard({ ev, featured, onClick }) {
   const booked = ev.bookedSeats||0, total = ev.totalSeats||1;
   const pct = Math.round((booked/total)*100);
-  const col = CAT_COLOR[ev.category]||'#8892A4';
+  const col = CAT_COLOR[ev.category]||'var(--muted)';
   const [hovered, setHovered] = useState(false);
   return (
     <div className='card-hover rounded-2xl overflow-hidden'

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getEvents, getMyBookings } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -12,7 +12,7 @@ function AttendeeDashboard() {
   const [bookings, setBookings] = useState([]);
   const [events,   setEvents]   = useState([]);
   const [loading,  setLoading]  = useState(true);
-  const CAT_COLOR = { Tech:'#00F2FE', Music:'#9B51E0', Sports:'#05FF9B', Food:'#FFB300', Art:'#FF4081', Business:'#4FC3F7', Other:'#8892A4' };
+  const CAT_COLOR = { Tech:'#00F2FE', Music:'#9B51E0', Sports:'#05FF9B', Food:'#FFB300', Art:'#FF4081', Business:'#4FC3F7', Other:'var(--muted)' };
 
   useEffect(() => {
     Promise.all([
@@ -82,7 +82,7 @@ function AttendeeDashboard() {
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
             {upcoming.map(bk => {
-              const col = CAT_COLOR[bk.event?.category]||'#8892A4';
+              const col = CAT_COLOR[bk.event?.category]||'var(--muted)';
               return (
                 <div key={bk._id} onClick={()=>navigate('/my-tickets')}
                   className="card-hover"
@@ -121,7 +121,7 @@ function AttendeeDashboard() {
         ) : (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:16 }}>
             {recommended.map(ev => {
-              const col = CAT_COLOR[ev.category]||'#8892A4';
+              const col = CAT_COLOR[ev.category]||'var(--muted)';
               return (
                 <div key={ev._id} className="card-hover" onClick={()=>navigate(`/events/${ev._id}`)}
                   style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:16, overflow:'hidden', cursor:'pointer' }}>
@@ -163,6 +163,63 @@ function OrganizerRedirect() {
   const navigate = useNavigate();
   useEffect(()=>{ navigate('/org-dashboard'); },[]);
   return null;
+}
+
+
+/* ── Animated sliding hero text (SkillBridge style) ─────────── */
+function HeroSlider() {
+  const phrases = [
+    'Discover Events That Inspire You',
+    'Book Your Seat in Seconds',
+    'From VIP to General — Pick Your Spot',
+    'Real QR Tickets, Instant Entry',
+    'Concerts, Conferences & Everything Between',
+    'Your Next Experience Starts Here',
+    '500+ Events Across India',
+    'Scan. Enter. Enjoy — No Printing Needed',
+    'Host Events. Sell Tickets. Track Everything.',
+    "India's Smartest Event Platform",
+    'Turn Any Moment Into a Memory',
+    'Where Every Event Feels Effortless',
+    'One Platform. Infinite Experiences.',
+    'Skip the Queue. Just Scan & Walk In.',
+    'Tickets Delivered to Your Inbox Instantly',
+    'Choose Your Seat. Own Your Moment.',
+    'From Bangalore to Mumbai — Events Everywhere',
+    'Organise Smarter. Sell Faster. Grow Bigger.',
+    'Live Music, Tech Talks & So Much More',
+    'Trusted by Thousands of Event-Goers',
+    'Your Weekend Plans, Sorted.',
+    'Smart Ticketing for the Modern Attendee',
+  ];
+  const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setAnimating(true);
+      setTimeout(() => {
+        setCurrent(c => (c + 1) % phrases.length);
+        setAnimating(false);
+      }, 400);
+    }, 2800);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div style={{ display:'inline-block', overflow:'hidden', verticalAlign:'bottom' }}>
+      <span style={{
+        display:'inline-block',
+        background:'linear-gradient(135deg,#38BDF8,#A78BFA)',
+        WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
+        transform: animating ? 'translateY(-100%)' : 'translateY(0)',
+        opacity: animating ? 0 : 1,
+        transition:'all 0.4s cubic-bezier(0.4,0,0.2,1)',
+      }}>
+        {phrases[current]}
+      </span>
+    </div>
+  );
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -208,8 +265,9 @@ function PublicHome() {
             500+ Live Events · India's Smartest Ticketing Platform
           </div>
 
-          <h1 className="font-grotesk" style={{ fontWeight:900, lineHeight:1.15, fontSize:'clamp(2rem,5.5vw,3.6rem)', marginBottom:20, color:'var(--heading)' }}>
-            Discover &amp; Book Your<br/><span className="grad">Next Unforgettable Event</span>
+          <h1 className="font-grotesk" style={{ fontWeight:900, lineHeight:1.2, fontSize:'clamp(1.8rem,5vw,3.4rem)', marginBottom:20, color:'var(--heading)' }}>
+            <HeroSlider /><br/>
+            <span style={{ color:'var(--heading)', fontWeight:900 }}>at EventSphere</span>
           </h1>
 
           <p style={{ color:'var(--muted)', maxWidth:500, margin:'0 auto 40px', fontSize:'1.05rem', lineHeight:1.7 }}>

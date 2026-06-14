@@ -19,7 +19,7 @@ const sendEmail = async ({ to, subject, html, attachments }) => {
 /* Convert raw seat number to A-01 format using event tiers */
 function getSeatLabel(num, tiers) {
   if (!num || !tiers?.length) return String(num);
-  const COLS = 20;
+  const COLS = 30;
   const ROWS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const order = ['VIP','Premium','Gold','Silver','General','Standard','Economy'];
   const sorted = [...tiers].sort((a, b) => {
