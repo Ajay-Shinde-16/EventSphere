@@ -119,7 +119,7 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
             </div>
 
             {/* Rows */}
-            <div className="seat-section" style={{ overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
               {rows.map(({ rowLabel, seats }) => (
                 <div key={rowLabel} style={{ display: 'grid', gridTemplateColumns: `22px repeat(${seats.length}, 1fr)`, gap: 3, marginBottom: 5, alignItems: 'center' }}>
                   {/* Row label */}
@@ -155,7 +155,6 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
                           color: (isBooked || isSelected) ? '#000' : 'rgba(255,255,255,0.2)',
                           boxShadow: isSelected ? '0 0 12px rgba(5,255,155,0.9)' : 'none',
                           transform: isSelected ? 'scale(1.25)' : 'scale(1)',
-                          cursor: isBooked ? 'not-allowed' : 'pointer',
                         }}
                       >
                         {seat.col}
@@ -376,7 +375,7 @@ export default function EventDetail() {
   const isOrg = user?.role === 'organizer' || user?.role === 'admin';
 
   return (
-    <div className="fade-up" style={{ maxWidth:1200, margin:'0 auto', padding:'16px' }}>
+    <div className="fade-up" style={{ maxWidth:1200, margin:'0 auto', padding:'28px 24px' }}>
 
       {/* ── BOOKING SUCCESS ── */}
       {booking && (
@@ -415,7 +414,7 @@ export default function EventDetail() {
         {/* Top color bar */}
         <div style={{ height:5, background:`linear-gradient(90deg,${cat.color},#9B51E0,#05FF9B)` }} />
 
-        <div style={{ padding:'clamp(16px,4vw,28px) clamp(16px,4vw,32px)' }}>
+        <div style={{ padding:'28px 32px' }}>
           {/* Badges row */}
           <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
             <span style={{ padding:'4px 14px', borderRadius:20, fontSize:11, fontWeight:700, background:`${cat.color}18`, color:cat.color, display:'flex', alignItems:'center', gap:6 }}>
@@ -429,7 +428,7 @@ export default function EventDetail() {
           <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'clamp(1.6rem,4vw,2.2rem)', color:'var(--heading)', lineHeight:1.2, marginBottom:24 }}>{event.title}</h1>
 
           {/* Info grid — 2 cols */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:'10px 24px', marginBottom:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px 32px', marginBottom:24 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ width:36, height:36, borderRadius:10, background:`${cat.color}15`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <i className="bi bi-calendar3" style={{ color:cat.color }} />
@@ -494,8 +493,7 @@ export default function EventDetail() {
       </div>
 
       {/* ── TWO COLUMN LAYOUT ── */}
-      <div style={{ display:'grid', gridTemplateColumns: isOrg ? '1fr' : 'minmax(0,1fr)', gap:20 }}
-        className="event-detail-grid">
+      <div style={{ display:'grid', gridTemplateColumns: isOrg ? '1fr' : '1fr 360px', gap:20 }}>
 
         {/* LEFT */}
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>

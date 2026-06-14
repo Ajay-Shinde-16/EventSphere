@@ -16,10 +16,16 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-core': ['react', 'react-dom', 'react-router-dom'],
-          'charts':     ['chart.js', 'react-chartjs-2'],
-          'vendor':     ['axios'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
+            return 'react-core';
+          }
+          if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs-2')) {
+            return 'charts';
+          }
+          if (id.includes('node_modules/axios')) {
+            return 'vendor';
+          }
         },
       },
     },

@@ -7,7 +7,10 @@ import {
   CategoryScale, LinearScale, BarElement, LineElement,
   PointElement, ArcElement, Title, Tooltip, Legend, Filler
 } from 'chart.js';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import { lazy, Suspense } from 'react';
+const Bar      = lazy(() => import('react-chartjs-2').then(m => ({ default: m.Bar })));
+const Doughnut = lazy(() => import('react-chartjs-2').then(m => ({ default: m.Doughnut })));
+const Line     = lazy(() => import('react-chartjs-2').then(m => ({ default: m.Line })));
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -182,7 +185,7 @@ export default function OrgDashboard() {
     <div className="flex fade-up" style={{ minHeight:'calc(100vh - 66px)' }}>
       <Sidebar active="orgdash"/>
 
-      <div style={{ flex:1, padding:'clamp(12px,3vw,24px)', minWidth:0, overflow:'hidden' }}>
+      <div style={{ flex:1, padding:'24px', minWidth:0 }}>
 
         {/* Header */}
         <div className="pgh" style={{ marginBottom:24 }}>
@@ -238,7 +241,7 @@ export default function OrgDashboard() {
 
         {/* ── OVERVIEW TAB ── */}
         {activeTab==='overview' && (
-          <div className='org-grid-2' style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,340px),1fr))',gap:16 }}>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:20 }}>
 
             {/* Bookings bar chart */}
             <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
@@ -247,7 +250,7 @@ export default function OrgDashboard() {
               </h3>
               <div style={{ height:220 }}>
                 {events.length > 0
-                  ? <Bar data={barData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/>
+                  ? <Suspense fallback={<div style={{height:200,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading chart...</div>}><Bar data={barData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/></Suspense>
                   : <div style={{textAlign:'center',padding:60,color:'var(--muted)',fontSize:13}}>No events yet</div>}
               </div>
             </div>
@@ -259,7 +262,7 @@ export default function OrgDashboard() {
               </h3>
               <div style={{ height:220 }}>
                 {events.length > 0
-                  ? <Doughnut data={doughnutData} options={doughnutOpts}/>
+                  ? <Suspense fallback={<div style={{height:200,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading chart...</div>}><Doughnut data={doughnutData} options={doughnutOpts}/></Suspense>
                   : <div style={{textAlign:'center',padding:60,color:'var(--muted)',fontSize:13}}>No events yet</div>}
               </div>
             </div>
@@ -270,7 +273,7 @@ export default function OrgDashboard() {
                 <i className="bi bi-graph-up-arrow"/>Revenue — Last 6 Months
               </h3>
               <div style={{ height:200 }}>
-                <Line data={lineData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/>
+                <Suspense fallback={<div style={{height:200,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading chart...</div>}><Line data={lineData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/></Suspense>
               </div>
             </div>
           </div>
@@ -377,19 +380,19 @@ export default function OrgDashboard() {
               </div>
               <div style={{ height:280 }}>
                 {events.length>0
-                  ? <Bar data={barData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/>
+                  ? <Suspense fallback={<div style={{height:160,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading...</div>}><Bar data={barData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/></Suspense>
                   : <div style={{textAlign:'center',padding:80,color:'var(--muted)'}}>No data yet</div>}
               </div>
             </div>
 
             {/* Line + Doughnut side by side */}
-            <div className='chart-pair' style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,300px),1fr))',gap:16 }}>
+            <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr',gap:20 }}>
               <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
                 <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--mint)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                   <i className="bi bi-graph-up"/>Revenue Trend (6 months)
                 </h3>
                 <div style={{ height:220 }}>
-                  <Line data={lineData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/>
+                  <Suspense fallback={<div style={{height:160,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading...</div>}><Line data={lineData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/></Suspense>
                 </div>
               </div>
               <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
@@ -398,7 +401,7 @@ export default function OrgDashboard() {
                 </h3>
                 <div style={{ height:220 }}>
                   {events.length>0
-                    ? <Doughnut data={doughnutData} options={{...doughnutOpts,plugins:{...doughnutOpts.plugins,legend:{position:'bottom',labels:{...doughnutOpts.plugins.legend.labels,padding:8}}}}}/>
+                    ? <Suspense fallback={<div style={{height:160,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading...</div>}><Doughnut data={doughnutData} options={{...doughnutOpts,plugins:{...doughnutOpts.plugins,legend:{position:'bottom',labels:{...doughnutOpts.plugins.legend.labels,padding:8}}}}}/></Suspense>
                     : <div style={{textAlign:'center',padding:60,color:'var(--muted)'}}>No data</div>}
                 </div>
               </div>
