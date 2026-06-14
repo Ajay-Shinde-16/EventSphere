@@ -429,17 +429,69 @@ tbody tr:hover td { background: var(--surface2); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   MOBILE NAV BAR
+═══════════════════════════════════════════════════════════════ */
+.mob-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {
   .bento-grid { grid-template-columns: repeat(2,1fr); }
   .bento-featured { grid-column: span 2; }
 }
+
 @media (max-width: 768px) {
   .sidebar { display: none !important; }
   .bento-grid { padding: 16px 16px 32px; }
+
+  /* Add bottom padding so content doesn't hide behind mobile nav */
+  body { padding-bottom: 72px; }
+
+  /* Tables — allow horizontal scroll, smaller text */
+  table { font-size: 12px; }
+  thead th { padding: 8px 10px; font-size: 10px; }
+  tbody td { padding: 10px 10px; font-size: 12px; }
+
+  /* Page header padding */
+  .pgh { padding: 16px 18px; }
 }
+
 @media (max-width: 640px) {
   .bento-grid { grid-template-columns: 1fr; }
   .bento-featured { grid-column: span 1; }
+
+  /* Stat cards — 2 cols on mobile */
+  .grid-cols-5 { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* General page padding */
+  .page-pad { padding: 16px 14px !important; }
+
+  /* Countdown boxes smaller */
+  .countdown-box { padding: 7px 10px !important; min-width: 44px !important; }
+  .countdown-num { font-size: 1.2rem !important; }
+
+  /* Navbar */
+  nav { height: 58px !important; }
+
+  /* Cat pills */
+  .cat-pill { padding: 5px 12px; font-size: 11px; }
+
+  /* Booking panel: not sticky on mobile */
+  .booking-panel { position: static !important; }
+}
+
+@media (max-width: 400px) {
+  .stat-card { padding: 14px; }
+  tbody td, thead th { padding: 8px 6px; }
 }

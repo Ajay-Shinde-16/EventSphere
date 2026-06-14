@@ -107,7 +107,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex fade-up" style={{ minHeight: 'calc(100vh - 66px)' }}>
+    <div className="fade-up" style={{ minHeight: 'calc(100vh - 66px)', display:'flex', flexDirection:'row' }}>
       {/* Sidebar */}
       <div className="sidebar hidden md:block">
         <div style={{ display:'flex',alignItems:'center',gap:8,padding:'0 6px',marginBottom:16,paddingBottom:14,borderBottom:'1px solid rgba(255,64,129,0.1)' }}>
@@ -131,14 +131,14 @@ export default function AdminDashboard() {
         <div className="sbl" onClick={() => navigate('/')}><i className="bi bi-house" />Home</div>
       </div>
 
-      <div className="flex-1 p-6 md:p-8" style={{ minWidth: 0 }}>
+      <div className="flex-1" style={{ minWidth:0, padding:'16px', paddingTop:'24px' }}>
         <div className="pgh mb-6">
           <h2 className="font-grotesk font-black text-xl mb-1" style={{ color:'var(--heading)' }}><i className="bi bi-shield-check me-2" style={{ color:'#FF4081' }} />Admin Dashboard</h2>
           <p className="font-jakarta text-sm" style={{ color:'var(--muted)' }}>Platform control center</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12, marginBottom:28 }} className="md:grid-cols-5-custom">
           {[
             { n: stats.users, l:'Users', c:'#00F2FE' },
             { n: stats.events, l:'Live Events', c:'#05FF9B' },
