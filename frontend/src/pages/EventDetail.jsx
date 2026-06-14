@@ -139,7 +139,6 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
                           width:'100%', height:24, borderRadius: 4,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 8, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif",
-                          cursor: isBooked ? 'not-allowed' : 'pointer',
                           transition: 'all 0.12s',
                           userSelect: 'none',
                           background: isBooked
