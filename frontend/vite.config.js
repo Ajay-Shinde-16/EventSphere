@@ -12,4 +12,16 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-core': ['react', 'react-dom', 'react-router-dom'],
+          'charts':     ['chart.js', 'react-chartjs-2'],
+          'vendor':     ['axios'],
+        },
+      },
+    },
+  },
 })
