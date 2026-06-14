@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { getAdminStats, getAdminEvents, updateEventStatus, getAdminUsers, toggleUserStatus, getAdminBookings } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -57,6 +58,7 @@ export default function AdminDashboard() {
   const [evFilter, setEvFilter] = useState('pending');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     if (!user || user.role !== 'admin') { navigate('/'); return; }
@@ -131,14 +133,14 @@ export default function AdminDashboard() {
         <div className="sbl" onClick={() => navigate('/')}><i className="bi bi-house" />Home</div>
       </div>
 
-      <div className="flex-1" style={{ minWidth:0, padding:'16px', paddingTop:'24px' }}>
+      <div className="flex-1" style={{ minWidth: 0, padding: isMobile ? '14px' : '32px' }}>
         <div className="pgh mb-6">
           <h2 className="font-grotesk font-black text-xl mb-1" style={{ color:'var(--heading)' }}><i className="bi bi-shield-check me-2" style={{ color:'#FF4081' }} />Admin Dashboard</h2>
           <p className="font-jakarta text-sm" style={{ color:'var(--muted)' }}>Platform control center</p>
         </div>
 
         {/* Stats */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12, marginBottom:28 }} className="md:grid-cols-5-custom">
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(5,1fr)', gap:12, marginBottom:28 }}>
           {[
             { n: stats.users, l:'Users', c:'#00F2FE' },
             { n: stats.events, l:'Live Events', c:'#05FF9B' },

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getEvents } from '../services/api';
 
@@ -68,6 +69,7 @@ function EventCard({ ev, featured, onClick }) {
 export default function EventsBrowse() {
   const navigate  = useNavigate();
   const location  = useLocation();
+  const { isMobile, isTablet } = useResponsive();
   const [events, setEvents]     = useState([]);
   const [loading, setLoading]   = useState(true);
   const [category, setCategory] = useState('all');
@@ -103,7 +105,7 @@ export default function EventsBrowse() {
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
       {/* Page header */}
-      <div style={{ background:'var(--surface)', borderBottom:'1px solid var(--border)', padding:'20px 16px' }}>
+      <div style={{ background:'var(--surface)', borderBottom:'1px solid var(--border)', padding: isMobile ? '16px 14px' : '28px 24px' }}>
         <div style={{ maxWidth:1400, margin:'0 auto' }}>
           <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.8rem', color:'var(--heading)', marginBottom:6 }}>
             Browse Events
@@ -160,7 +162,7 @@ export default function EventsBrowse() {
             <p style={{ color:'var(--muted)',fontSize:13 }}>Try different filters or search terms</p>
           </div>
         ) : (
-          <div className="fade-up" style={{ maxWidth:1400, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:20, padding:'24px 24px 48px' }}>
+          <div className="fade-up" style={{ maxWidth:1400, margin:'0 auto', display:'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(auto-fill,minmax(300px,1fr))', gap: isMobile ? 12 : 20, padding: isMobile ? '14px 14px 80px' : '24px 24px 48px' }}>
             {events.map((ev)=><EventCard key={ev._id} ev={ev} featured={false} onClick={()=>navigate(`/events/${ev._id}`)}/>)}
           </div>
         )}

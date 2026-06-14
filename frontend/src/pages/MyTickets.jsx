@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { getMyBookings, cancelBooking } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -377,6 +378,7 @@ export default function MyTickets() {
   const [previewTicket, setPreviewTicket] = useState(null);
   const { user } = useAuth();
   const navigate  = useNavigate();
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
@@ -404,7 +406,7 @@ export default function MyTickets() {
   );
 
   return (
-    <div className="fade-up" style={{maxWidth:980,margin:'0 auto',padding:'28px 24px'}}>
+    <div className="fade-up" style={{maxWidth:980,margin:'0 auto',padding: isMobile ? '16px 14px 80px' : '28px 24px'}}>
 
       {/* Ticket Preview Modal */}
       {previewTicket && (
@@ -441,7 +443,7 @@ export default function MyTickets() {
           </button>
         </div>
       ) : (
-        <div className='tickets-grid' style={{display:'grid',gap:16,gridTemplateColumns:'repeat(auto-fill,minmax(min(440px,100%),1fr))'}}>
+        <div style={{display:'grid',gap:16,gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill,minmax(420px,1fr))'}}>
           {filtered.map(bk => {
             const cat = CAT_CONFIG[bk.event?.category] || CAT_CONFIG.Other;
             return (

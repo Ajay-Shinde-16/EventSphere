@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { getMyEvents, getEventBookings, deleteEvent } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -7,10 +8,7 @@ import {
   CategoryScale, LinearScale, BarElement, LineElement,
   PointElement, ArcElement, Title, Tooltip, Legend, Filler
 } from 'chart.js';
-import { lazy, Suspense } from 'react';
-const Bar      = lazy(() => import('react-chartjs-2').then(m => ({ default: m.Bar })));
-const Doughnut = lazy(() => import('react-chartjs-2').then(m => ({ default: m.Doughnut })));
-const Line     = lazy(() => import('react-chartjs-2').then(m => ({ default: m.Line })));
+import { Bar, Doughnut, Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -82,6 +80,7 @@ export default function OrgDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuth();
   const navigate  = useNavigate();
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     if (!user || user.role === 'attendee') { navigate('/'); return; }
@@ -250,7 +249,7 @@ export default function OrgDashboard() {
               </h3>
               <div style={{ height:220 }}>
                 {events.length > 0
-                  ? <Suspense fallback={<div style={{height:200,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading chart...</div>}><Bar data={barData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/></Suspense>
+                  ? <Bar data={barData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/>
                   : <div style={{textAlign:'center',padding:60,color:'var(--muted)',fontSize:13}}>No events yet</div>}
               </div>
             </div>
@@ -262,7 +261,7 @@ export default function OrgDashboard() {
               </h3>
               <div style={{ height:220 }}>
                 {events.length > 0
-                  ? <Suspense fallback={<div style={{height:200,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading chart...</div>}><Doughnut data={doughnutData} options={doughnutOpts}/></Suspense>
+                  ? <Doughnut data={doughnutData} options={doughnutOpts}/>
                   : <div style={{textAlign:'center',padding:60,color:'var(--muted)',fontSize:13}}>No events yet</div>}
               </div>
             </div>
@@ -273,7 +272,7 @@ export default function OrgDashboard() {
                 <i className="bi bi-graph-up-arrow"/>Revenue — Last 6 Months
               </h3>
               <div style={{ height:200 }}>
-                <Suspense fallback={<div style={{height:200,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading chart...</div>}><Line data={lineData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/></Suspense>
+                <Line data={lineData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/>
               </div>
             </div>
           </div>
@@ -380,7 +379,7 @@ export default function OrgDashboard() {
               </div>
               <div style={{ height:280 }}>
                 {events.length>0
-                  ? <Suspense fallback={<div style={{height:160,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading...</div>}><Bar data={barData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/></Suspense>
+                  ? <Bar data={barData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/>
                   : <div style={{textAlign:'center',padding:80,color:'var(--muted)'}}>No data yet</div>}
               </div>
             </div>
@@ -392,7 +391,7 @@ export default function OrgDashboard() {
                   <i className="bi bi-graph-up"/>Revenue Trend (6 months)
                 </h3>
                 <div style={{ height:220 }}>
-                  <Suspense fallback={<div style={{height:160,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading...</div>}><Line data={lineData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/></Suspense>
+                  <Line data={lineData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/>
                 </div>
               </div>
               <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
@@ -401,7 +400,7 @@ export default function OrgDashboard() {
                 </h3>
                 <div style={{ height:220 }}>
                   {events.length>0
-                    ? <Suspense fallback={<div style={{height:160,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>Loading...</div>}><Doughnut data={doughnutData} options={{...doughnutOpts,plugins:{...doughnutOpts.plugins,legend:{position:'bottom',labels:{...doughnutOpts.plugins.legend.labels,padding:8}}}}}/></Suspense>
+                    ? <Doughnut data={doughnutData} options={{...doughnutOpts,plugins:{...doughnutOpts.plugins,legend:{position:'bottom',labels:{...doughnutOpts.plugins.legend.labels,padding:8}}}}}/>
                     : <div style={{textAlign:'center',padding:60,color:'var(--muted)'}}>No data</div>}
                 </div>
               </div>

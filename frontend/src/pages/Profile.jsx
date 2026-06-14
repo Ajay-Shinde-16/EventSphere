@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { updateProfile } from '../services/api';
@@ -6,6 +7,7 @@ import { updateProfile } from '../services/api';
 export default function Profile() {
   const { user, setUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { isMobile } = useResponsive();
   const [form, setForm] = useState({ name: user?.name||'', phone: user?.phone||'', city: user?.city||'' });
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
@@ -53,7 +55,7 @@ export default function Profile() {
   ].filter(Boolean);
 
   return (
-    <div style={{ minHeight:'100vh', background:'var(--bg)', padding:'clamp(20px,5vw,80px) clamp(12px,4vw,16px) 40px' }}>
+    <div style={{ minHeight:'100vh', background:'var(--bg)', padding: isMobile ? '16px 14px 80px' : '32px 24px 40px' }}>
       <div style={{ maxWidth:600, margin:'0 auto' }}>
 
         {/* Avatar card */}
@@ -137,7 +139,7 @@ export default function Profile() {
         {/* Quick navigation */}
         <div style={card}>
           <h2 style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:2, marginBottom:16 }}>Quick Navigation</h2>
-          <div className='profile-nav-grid' style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
             {navLinks.map((link,i) => (
               <Link key={i} to={link.to}
                 style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:14, background:'var(--surface2)', border:'1px solid var(--border)', textDecoration:'none', transition:'all 0.2s' }}

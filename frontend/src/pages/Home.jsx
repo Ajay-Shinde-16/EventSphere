@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { getEvents, getMyBookings } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 function AttendeeDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isMobile } = useResponsive();
   const [bookings, setBookings] = useState([]);
   const [events,   setEvents]   = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -26,10 +28,10 @@ function AttendeeDashboard() {
   const initials    = user?.name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'U';
 
   return (
-    <div style={{ maxWidth:1200, margin:'0 auto', padding:'28px 24px' }}>
+    <div style={{ maxWidth:1200, margin:'0 auto', padding: isMobile ? '16px 14px 80px' : '28px 24px' }}>
 
       {/* Welcome banner */}
-      <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:'28px 32px', marginBottom:24, position:'relative', overflow:'hidden' }}>
+      <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding: isMobile ? '18px 16px' : '28px 32px', marginBottom:24, position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:0, left:0, right:0, height:4, background:'linear-gradient(90deg,var(--cyan),var(--purple),var(--mint))' }}/>
         <div style={{ position:'absolute', top:-60, right:-60, width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle,rgba(0,242,254,0.05),transparent 70%)' }}/>
         <div style={{ display:'flex', alignItems:'center', gap:16, flexWrap:'wrap', position:'relative' }}>
@@ -52,7 +54,7 @@ function AttendeeDashboard() {
       </div>
 
       {/* Stats */}
-      <div className='mobile-2col' style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:28 }}>
         {[
           { icon:'bi-ticket-perforated-fill', val:bookings.length, label:'Total Bookings',  color:'var(--cyan)'   },
           { icon:'bi-check-circle-fill',      val:bookings.filter(b=>b.status==='confirmed').length, label:'Confirmed', color:'var(--mint)' },
@@ -80,7 +82,7 @@ function AttendeeDashboard() {
             </h2>
             <button onClick={()=>navigate('/my-tickets')} style={{ fontSize:12, color:'var(--cyan)', background:'none', border:'none', cursor:'pointer', fontWeight:700 }}>View All →</button>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
             {upcoming.map(bk => {
               const col = CAT_COLOR[bk.event?.category]||'var(--muted)';
               return (
@@ -119,7 +121,7 @@ function AttendeeDashboard() {
         {loading ? (
           <div style={{ textAlign:'center', padding:40 }}><div style={{ width:36,height:36,borderRadius:'50%',border:'3px solid var(--surface2)',borderTopColor:'var(--cyan)',animation:'spin 0.8s linear infinite',margin:'0 auto' }}/></div>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill,minmax(260px,1fr))', gap:16 }}>
             {recommended.map(ev => {
               const col = CAT_COLOR[ev.category]||'var(--muted)';
               return (
@@ -227,6 +229,7 @@ function HeroSlider() {
 ══════════════════════════════════════════════════════════════ */
 function PublicHome() {
   const navigate    = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
   const [liveCount, setLiveCount] = useState(10247);
 
   useEffect(() => {
@@ -256,7 +259,7 @@ function PublicHome() {
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
 
       {/* ── HERO ── */}
-      <section style={{ padding:'clamp(48px,8vw,88px) 16px 48px', textAlign:'center', position:'relative', overflow:'hidden', background:'radial-gradient(ellipse at 70% -10%,rgba(155,81,224,0.07),transparent 55%),radial-gradient(ellipse at 20% 100%,rgba(0,242,254,0.05),transparent 50%)' }}>
+      <section style={{ padding: isMobile ? '52px 16px 48px' : '88px 24px 72px', textAlign:'center', position:'relative', overflow:'hidden', background:'radial-gradient(ellipse at 70% -10%,rgba(155,81,224,0.07),transparent 55%),radial-gradient(ellipse at 20% 100%,rgba(0,242,254,0.05),transparent 50%)' }}>
         <div style={{ position:'relative', zIndex:1, maxWidth:760, margin:'0 auto' }}>
 
           {/* Badge */}
@@ -265,7 +268,7 @@ function PublicHome() {
             500+ Live Events · India's Smartest Ticketing Platform
           </div>
 
-          <h1 className="font-grotesk" style={{ fontWeight:900, lineHeight:1.2, fontSize:'clamp(1.8rem,5vw,3.4rem)', marginBottom:20, color:'var(--heading)' }}>
+          <h1 className="font-grotesk" style={{ fontWeight:900, lineHeight:1.2, fontSize: isMobile ? '1.7rem' : 'clamp(1.8rem,5vw,3.4rem)', marginBottom:20, color:'var(--heading)' }}>
             <HeroSlider /><br/>
             <span style={{ color:'var(--heading)', fontWeight:900 }}>at EventSphere</span>
           </h1>
@@ -275,7 +278,7 @@ function PublicHome() {
           </p>
 
           {/* CTA buttons — SkillBridge style */}
-          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
             <button onClick={()=>navigate('/register')}
               style={{ padding:'14px 32px', borderRadius:50, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:15, background:'linear-gradient(135deg,#00F2FE,#9B51E0)', color:'#000', border:'none', cursor:'pointer', boxShadow:'0 6px 28px rgba(0,242,254,0.28)', transition:'all 0.3s', display:'flex', alignItems:'center', gap:8 }}
               onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04)'}
@@ -297,7 +300,7 @@ function PublicHome() {
 
       {/* ── STATS BAR ── */}
       <section style={{ background:'var(--surface)', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', padding:'28px 24px' }}>
-        <div style={{ maxWidth:1000, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:0 }}>
+        <div style={{ maxWidth:1000, margin:'0 auto', display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fit,minmax(180px,1fr))', gap:0 }}>
           {[
             { val:'500+',                    label:'Events Available',  icon:'bi-calendar-event', color:'var(--cyan)'   },
             { val:liveCount.toLocaleString(), label:'Attendees Served', icon:'bi-people-fill',    color:'var(--purple)' },
@@ -314,7 +317,7 @@ function PublicHome() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section style={{ padding:'72px 24px', background:'var(--surface2)' }}>
+      <section style={{ padding: isMobile ? '40px 14px' : '72px 24px', background:'var(--surface2)' }}>
         <div style={{ maxWidth:1100, margin:'0 auto' }}>
           <div style={{ textAlign:'center', marginBottom:48 }}>
             <p style={{ fontSize:11, fontWeight:700, color:'var(--purple)', textTransform:'uppercase', letterSpacing:3, fontFamily:"'Space Grotesk',sans-serif", marginBottom:10 }}>Production-grade features</p>
@@ -322,7 +325,7 @@ function PublicHome() {
               Why <span className="grad">EventSphere?</span>
             </h2>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:14 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : isTablet ? 'repeat(3,1fr)' : 'repeat(auto-fit,minmax(220px,1fr))', gap: isMobile ? 12 : 16 }}>
             {FEATURES.map((f,i)=>(
               <div key={i} className="stat-card card-hover">
                 <div style={{ width:44, height:44, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:14, background:`${f.color}15`, border:`1px solid ${f.color}25` }}>
@@ -348,7 +351,7 @@ function PublicHome() {
           {/* Connector line */}
           <div style={{ position:'relative' }}>
             <div style={{ position:'absolute', top:38, left:'10%', right:'10%', height:2, background:`linear-gradient(90deg,var(--cyan),var(--purple),var(--mint),var(--amber))`, opacity:0.2, zIndex:0 }}/>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:16, position:'relative', zIndex:1 }}>
+            <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(auto-fit,minmax(220px,1fr))', gap:16, position:'relative', zIndex:1 }}>
               {STEPS.map((s,i)=>(
                 <div key={i} className="card-hover" style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:'32px 24px', textAlign:'center', boxShadow:'var(--shadow)' }}>
                   <div style={{ width:68, height:68, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', background:`${s.color}15`, border:`2px solid ${s.color}30` }}>

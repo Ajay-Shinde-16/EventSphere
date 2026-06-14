@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { checkIn, getEventBookings, getMyEvents } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -257,6 +258,7 @@ export default function ScanQR() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const { user } = useAuth();
   const navigate  = useNavigate();
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     if (!user || user.role === 'attendee') { navigate('/'); return; }
@@ -307,7 +309,7 @@ export default function ScanQR() {
   };
 
   return (
-    <div style={{ display:'flex', minHeight:'calc(100vh - 66px)' }}>
+    <div style={{ display:'flex', minHeight:'calc(100vh - 66px)', flexDirection:'row' }}>
 
       {/* Webcam modal */}
       {cameraOpen && <WebcamScanner onScan={handleCheckIn} onClose={() => setCameraOpen(false)} />}
@@ -324,7 +326,7 @@ export default function ScanQR() {
         <div className="sbl" onClick={() => navigate('/create-event')}><i className="bi bi-plus-circle"/>New Event</div>
       </div>
 
-      <div className="fade-up" style={{ flex:1, padding:'clamp(12px,3vw,24px)', minWidth:0, overflow:'hidden' }}>
+      <div className="fade-up" style={{ flex:1, padding: isMobile ? '14px' : '24px', minWidth:0 }}>
         <div className="pgh" style={{ marginBottom:24 }}>
           <h2 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:900,fontSize:'1.2rem',marginBottom:4,color:'var(--heading)',display:'flex',alignItems:'center',gap:10 }}>
             <i className="bi bi-qr-code-scan" style={{ color:'var(--mint)' }}/>QR Check-in Terminal
@@ -332,7 +334,7 @@ export default function ScanQR() {
           <p style={{ color:'var(--muted)',fontSize:13 }}>Scan with camera or enter booking code manually</p>
         </div>
 
-        <div className='scan-grid' style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,320px),1fr))', gap:16 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 14 : 20 }}>
 
           {/* Scanner panel */}
           <div style={{ background:'var(--card-bg)',border:'1px solid rgba(5,255,155,0.2)',borderRadius:20,padding:24 }}>

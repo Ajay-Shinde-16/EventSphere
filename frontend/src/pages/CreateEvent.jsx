@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +9,7 @@ const tierColors = ['#00F2FE','#9B51E0','#05FF9B','#FFB300','#FF4081'];
 export default function CreateEvent() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isMobile } = useResponsive();
   const [form, setForm] = useState({ title:'', description:'', category:'Tech', date:'', time:'10:00 AM', venue:'', city:'', totalSeats:500, isFree:false, tags:'' });
   const [tiers, setTiers] = useState([{ name:'VIP', price:2999, seats:100 }, { name:'General', price:999, seats:400 }]);
   const [loading, setLoading] = useState(false);
@@ -52,14 +54,14 @@ export default function CreateEvent() {
   };
 
   return (
-    <div className="flex fade-up" style={{ minHeight: 'calc(100vh - 66px)' }}>
+    <div className="fade-up" style={{ minHeight: 'calc(100vh - 66px)', display:'flex', flexDirection:'row' }}>
       {/* Sidebar */}
       <div className="sidebar hidden md:block">
         <div className="sbl" onClick={() => navigate('/org-dashboard')}><i className="bi bi-arrow-left" />Back</div>
         <div className="sbl active"><i className="bi bi-plus-circle" />Create Event</div>
       </div>
 
-      <div className="flex-1 p-6 md:p-8" style={{ minWidth: 0 }}>
+      <div className="flex-1" style={{ minWidth: 0, padding: isMobile ? '14px' : '32px' }}>
         <div className="pgh mb-6">
           <h2 className="font-grotesk font-black text-xl mb-1" style={{ color:'var(--heading)' }}><i className="bi bi-calendar-plus me-2" style={{ color: '#00F2FE' }} />Create New Event</h2>
           <p className="font-jakarta text-sm" style={{ color: 'var(--muted)' }}>Submit for admin approval to go live</p>
@@ -69,7 +71,7 @@ export default function CreateEvent() {
           <div className="mb-4 px-4 py-3 rounded-xl font-jakarta text-sm" style={{ background: msg.startsWith('✅') ? 'rgba(5,255,155,0.1)' : 'rgba(255,64,129,0.1)', border: `1px solid ${msg.startsWith('✅')?'rgba(5,255,155,0.2)':'rgba(255,64,129,0.2)'}`, color: msg.startsWith('✅')?'#05FF9B':'#FF4081' }}>{msg}</div>
         )}
 
-        <div className="grid gap-6" style={{ gridTemplateColumns: '1fr 300px' }}>
+        <div className="grid gap-6" style={{ gridTemplateColumns: isMobile ? '1fr' : '1fr 300px' }}>
           <form onSubmit={handleSubmit}>
             {/* AI Suggest */}
             <div className="rounded-2xl p-6 mb-5" style={{ background: 'linear-gradient(135deg,rgba(155,81,224,0.08),rgba(0,242,254,0.08))', border: '1px solid rgba(155,81,224,0.2)' }}>
@@ -93,7 +95,7 @@ export default function CreateEvent() {
               </div>
               <div className="mb-4"><label className="fl">Event Title *</label><input className="fi" placeholder="Give your event a great title" value={form.title} onChange={e => setForm({...form,title:e.target.value})} required /></div>
               <div className="mb-4"><label className="fl">Description *</label><textarea className="fta" placeholder="Describe your event in detail..." value={form.description} onChange={e => setForm({...form,description:e.target.value})} required /></div>
-              <div className="grid grid-cols-2 gap-4">
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:16 }}>
                 <div><label className="fl">Date *</label><input type="date" className="fi" value={form.date} onChange={e => setForm({...form,date:e.target.value})} required /></div>
                 <div><label className="fl">Time *</label><input className="fi" placeholder="10:00 AM" value={form.time} onChange={e => setForm({...form,time:e.target.value})} /></div>
                 <div><label className="fl">Venue *</label><input className="fi" placeholder="Venue name" value={form.venue} onChange={e => setForm({...form,venue:e.target.value})} required /></div>
@@ -105,7 +107,7 @@ export default function CreateEvent() {
                   </select>
                 </div>
                 <div><label className="fl">Total Seats *</label><input type="number" className="fi" placeholder="500" min="1" value={form.totalSeats} onChange={e => setForm({...form,totalSeats:Number(e.target.value)})} required /></div>
-                <div className="col-span-2"><label className="fl">Tags (comma separated)</label><input className="fi" placeholder="AI, Workshop, Networking" value={form.tags} onChange={e => setForm({...form,tags:e.target.value})} /></div>
+                <div><label className="fl">Tags (comma separated)</label><input className="fi" placeholder="AI, Workshop, Networking" value={form.tags} onChange={e => setForm({...form,tags:e.target.value})} /></div>
               </div>
               <div className="flex items-center gap-3 mt-4">
                 <input type="checkbox" id="free" checked={form.isFree} onChange={e => setForm({...form,isFree:e.target.checked})} style={{ accentColor: '#00F2FE', width: 16, height: 16 }} />
