@@ -4,6 +4,9 @@ export const AuthContext = createContext();
 
 const applyTheme = (isDark) => {
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  // Also update meta theme-color for mobile browsers
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', isDark ? '#0F1117' : '#F8FAFC');
 };
 
 export const AuthProvider = ({ children }) => {

@@ -13,6 +13,7 @@ import ScanQR from './pages/ScanQR';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import EventsBrowse from './pages/EventsBrowse';
+import NotFound from './pages/NotFound';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useContext(AuthContext);
@@ -71,7 +72,7 @@ function AppShell() {
         <Route path="/scan-qr"       element={<OrganizerRoute><ScanQR /></OrganizerRoute>} />
         <Route path="/admin"         element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/profile"       element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="*"              element={<Navigate to="/" replace />} />
+        <Route path="*"              element={<NotFound />} />
       </Routes>
       <MobileNav />
     </div>

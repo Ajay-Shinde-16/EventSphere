@@ -115,7 +115,7 @@ export default function EventsBrowse() {
           <div style={{ display:'flex', gap:10, maxWidth:600 }}>
             <div style={{ flex:1, display:'flex', alignItems:'center', gap:10, background:'var(--input-bg)', border:'1px solid var(--border)', borderRadius:12, padding:'10px 16px' }}>
               <i className="bi bi-search" style={{ color:'var(--muted)', flexShrink:0 }}/>
-              <input style={{ flex:1, background:'transparent', border:'none', outline:'none', fontSize:14, color:'var(--text)', fontFamily:"'Plus Jakarta Sans',sans-serif" }}
+              <input style={{ flex:1, background:'transparent', border:'none', outline:'none', fontSize:16, color:'var(--text)', fontFamily:"'Plus Jakarta Sans',sans-serif" }}
                 placeholder="Search events, cities, categories..."
                 value={search} onChange={e=>setSearch(e.target.value)}
                 onKeyDown={e=>e.key==='Enter'&&doSearch()}
@@ -138,7 +138,7 @@ export default function EventsBrowse() {
             </button>
           ))}
           <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
-            <select style={{ fontSize:12, background:'transparent', border:'none', outline:'none', cursor:'pointer', color:'var(--muted)', fontFamily:"'Plus Jakarta Sans',sans-serif" }}
+            <select style={{ fontSize:12, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, padding:'4px 8px', outline:'none', cursor:'pointer', color:'var(--muted)', fontFamily:"'Plus Jakarta Sans',sans-serif" }}
               value={city} onChange={e=>setCity(e.target.value)}>
               <option value="">All Cities</option>
               {['Bangalore','Mumbai','Hyderabad','Pune','Delhi','Chennai'].map(c=><option key={c}>{c}</option>)}

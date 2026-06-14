@@ -406,7 +406,7 @@ export default function MyTickets() {
   );
 
   return (
-    <div className="fade-up" style={{maxWidth:980,margin:'0 auto',padding: isMobile ? '16px 14px 80px' : '28px 24px'}}>
+    <div className="fade-up" style={{maxWidth:980,margin:'0 auto',padding: isMobile ? '16px 14px calc(80px + env(safe-area-inset-bottom))' : '28px 24px'}}>
 
       {/* Ticket Preview Modal */}
       {previewTicket && (

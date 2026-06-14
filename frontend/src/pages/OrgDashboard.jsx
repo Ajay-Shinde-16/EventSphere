@@ -175,7 +175,7 @@ export default function OrgDashboard() {
   const tabs = ['overview','events','analytics'];
 
   if (loading) return (
-    <div style={{textAlign:'center',padding:'80px'}}>
+    <div style={{textAlign:'center',padding:'calc(80px + env(safe-area-inset-bottom))'}}>
       <div style={{width:44,height:44,borderRadius:'50%',border:'3px solid var(--surface2)',borderTopColor:'var(--cyan)',animation:'spin 0.8s linear infinite',margin:'0 auto'}}/>
     </div>
   );
@@ -184,7 +184,7 @@ export default function OrgDashboard() {
     <div className="flex fade-up" style={{ minHeight:'calc(100vh - 66px)' }}>
       <Sidebar active="orgdash"/>
 
-      <div style={{ flex:1, padding:'24px', minWidth:0 }}>
+      <div style={{ flex:1, padding:'16px', minWidth:0 }}>
 
         {/* Header */}
         <div className="pgh" style={{ marginBottom:24 }}>

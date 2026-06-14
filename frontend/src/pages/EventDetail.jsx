@@ -28,7 +28,7 @@ function Countdown({ date }) {
   return (
     <div style={{ display:'flex', gap:8 }}>
       {[['D', t.d],['H', t.h],['M', t.m],['S', t.s]].map(([l, v]) => (
-        <div key={l} style={{ textAlign:'center', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:'10px 14px', minWidth:56, border:'1px solid rgba(0,242,254,0.15)' }}>
+        <div key={l} style={{ textAlign:'center', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:'8px 10px', minWidth:48, border:'1px solid rgba(0,242,254,0.15)' } className="countdown-box"}>
           <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.6rem', color:'var(--cyan)', lineHeight:1 }}>{String(v||0).padStart(2,'0')}</div>
           <div style={{ fontSize:9, color:'var(--muted)', textTransform:'uppercase', marginTop:3, letterSpacing:1 }}>{l}</div>
         </div>
@@ -367,7 +367,7 @@ export default function EventDetail() {
     else { navigator.clipboard.writeText(url); setShareMsg('Copied!'); setTimeout(()=>setShareMsg(''),2000); }
   };
 
-  if (loading) return <div style={{textAlign:'center',padding:'80px'}}><div style={{width:44,height:44,borderRadius:'50%',border:'3px solid var(--surface2)',borderTopColor:'var(--cyan)',animation:'spin 0.8s linear infinite',margin:'0 auto'}}/></div>;
+  if (loading) return <div style={{textAlign:'center',padding:'calc(80px + env(safe-area-inset-bottom))'}}><div style={{width:44,height:44,borderRadius:'50%',border:'3px solid var(--surface2)',borderTopColor:'var(--cyan)',animation:'spin 0.8s linear infinite',margin:'0 auto'}}/></div>;
   if (!event) return null;
 
   const isSoldOut = event.bookedSeats >= event.totalSeats;

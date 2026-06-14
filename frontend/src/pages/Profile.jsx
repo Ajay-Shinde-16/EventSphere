@@ -55,7 +55,7 @@ export default function Profile() {
   ].filter(Boolean);
 
   return (
-    <div style={{ minHeight:'100vh', background:'var(--bg)', padding: isMobile ? '16px 14px 80px' : '32px 24px 40px' }}>
+    <div style={{ minHeight:'100vh', background:'var(--bg)', padding: isMobile ? '16px 14px calc(80px + env(safe-area-inset-bottom))' : '32px 24px 40px' }}>
       <div style={{ maxWidth:600, margin:'0 auto' }}>
 
         {/* Avatar card */}

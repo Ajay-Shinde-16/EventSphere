@@ -28,7 +28,7 @@ function AttendeeDashboard() {
   const initials    = user?.name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'U';
 
   return (
-    <div style={{ maxWidth:1200, margin:'0 auto', padding: isMobile ? '16px 14px 80px' : '28px 24px' }}>
+    <div style={{ maxWidth:1200, margin:'0 auto', padding: isMobile ? '16px 14px calc(80px + env(safe-area-inset-bottom))' : '28px 24px' }}>
 
       {/* Welcome banner */}
       <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding: isMobile ? '18px 16px' : '28px 32px', marginBottom:24, position:'relative', overflow:'hidden' }}>
@@ -278,7 +278,7 @@ function PublicHome() {
           </p>
 
           {/* CTA buttons — SkillBridge style */}
-          <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' } className="hero-btns"}>
             <button onClick={()=>navigate('/register')}
               style={{ padding:'14px 32px', borderRadius:50, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:15, background:'linear-gradient(135deg,#00F2FE,#9B51E0)', color:'#000', border:'none', cursor:'pointer', boxShadow:'0 6px 28px rgba(0,242,254,0.28)', transition:'all 0.3s', display:'flex', alignItems:'center', gap:8 }}
               onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04)'}
@@ -376,7 +376,7 @@ function PublicHome() {
           <p style={{ color:'var(--muted)', marginBottom:36, fontSize:'1rem', lineHeight:1.7 }}>
             Join thousands of attendees and organizers on EventSphere.
           </p>
-          <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' } className="hero-btns"}>
             <button onClick={()=>navigate('/register')}
               style={{ padding:'14px 36px', borderRadius:50, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:15, background:'linear-gradient(135deg,#00F2FE,#9B51E0)', color:'#000', border:'none', cursor:'pointer', boxShadow:'0 6px 28px rgba(0,242,254,0.25)', transition:'all 0.3s' }}
               onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04)'}
