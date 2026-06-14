@@ -103,7 +103,7 @@ export default function EventsBrowse() {
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
       {/* Page header */}
-      <div style={{ background:'var(--surface)', borderBottom:'1px solid var(--border)', padding:'28px 24px' }}>
+      <div style={{ background:'var(--surface)', borderBottom:'1px solid var(--border)', padding:'20px 16px' }}>
         <div style={{ maxWidth:1400, margin:'0 auto' }}>
           <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.8rem', color:'var(--heading)', marginBottom:6 }}>
             Browse Events

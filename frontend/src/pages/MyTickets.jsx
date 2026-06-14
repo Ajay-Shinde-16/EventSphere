@@ -441,7 +441,7 @@ export default function MyTickets() {
           </button>
         </div>
       ) : (
-        <div style={{display:'grid',gap:16,gridTemplateColumns:'repeat(auto-fill,minmax(440px,1fr))'}}>
+        <div className='tickets-grid' style={{display:'grid',gap:16,gridTemplateColumns:'repeat(auto-fill,minmax(min(440px,100%),1fr))'}}>
           {filtered.map(bk => {
             const cat = CAT_CONFIG[bk.event?.category] || CAT_CONFIG.Other;
             return (

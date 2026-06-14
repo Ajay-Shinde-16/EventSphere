@@ -182,7 +182,7 @@ export default function OrgDashboard() {
     <div className="flex fade-up" style={{ minHeight:'calc(100vh - 66px)' }}>
       <Sidebar active="orgdash"/>
 
-      <div style={{ flex:1, padding:'24px', minWidth:0 }}>
+      <div style={{ flex:1, padding:'clamp(12px,3vw,24px)', minWidth:0, overflow:'hidden' }}>
 
         {/* Header */}
         <div className="pgh" style={{ marginBottom:24 }}>
@@ -238,7 +238,7 @@ export default function OrgDashboard() {
 
         {/* ── OVERVIEW TAB ── */}
         {activeTab==='overview' && (
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:20 }}>
+          <div className='org-grid-2' style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,340px),1fr))',gap:16 }}>
 
             {/* Bookings bar chart */}
             <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
@@ -383,7 +383,7 @@ export default function OrgDashboard() {
             </div>
 
             {/* Line + Doughnut side by side */}
-            <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr',gap:20 }}>
+            <div className='chart-pair' style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,300px),1fr))',gap:16 }}>
               <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
                 <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--mint)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                   <i className="bi bi-graph-up"/>Revenue Trend (6 months)

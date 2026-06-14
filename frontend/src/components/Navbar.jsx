@@ -77,7 +77,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Nav links */}
+          {/* Nav links - hidden on mobile */}
           <div style={{ display:'flex', alignItems:'center', gap:4 }} className="hidden md:flex">
             {navLinks.map(link => (
               <button key={link.path} onClick={() => navigate(link.path)}

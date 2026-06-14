@@ -324,7 +324,7 @@ export default function ScanQR() {
         <div className="sbl" onClick={() => navigate('/create-event')}><i className="bi bi-plus-circle"/>New Event</div>
       </div>
 
-      <div className="fade-up" style={{ flex:1, padding:'24px', minWidth:0 }}>
+      <div className="fade-up" style={{ flex:1, padding:'clamp(12px,3vw,24px)', minWidth:0, overflow:'hidden' }}>
         <div className="pgh" style={{ marginBottom:24 }}>
           <h2 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:900,fontSize:'1.2rem',marginBottom:4,color:'var(--heading)',display:'flex',alignItems:'center',gap:10 }}>
             <i className="bi bi-qr-code-scan" style={{ color:'var(--mint)' }}/>QR Check-in Terminal
@@ -332,7 +332,7 @@ export default function ScanQR() {
           <p style={{ color:'var(--muted)',fontSize:13 }}>Scan with camera or enter booking code manually</p>
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+        <div className='scan-grid' style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,320px),1fr))', gap:16 }}>
 
           {/* Scanner panel */}
           <div style={{ background:'var(--card-bg)',border:'1px solid rgba(5,255,155,0.2)',borderRadius:20,padding:24 }}>

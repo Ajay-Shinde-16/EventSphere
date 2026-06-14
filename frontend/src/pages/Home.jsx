@@ -52,7 +52,7 @@ function AttendeeDashboard() {
       </div>
 
       {/* Stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:28 }}>
+      <div className='mobile-2col' style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:24 }}>
         {[
           { icon:'bi-ticket-perforated-fill', val:bookings.length, label:'Total Bookings',  color:'var(--cyan)'   },
           { icon:'bi-check-circle-fill',      val:bookings.filter(b=>b.status==='confirmed').length, label:'Confirmed', color:'var(--mint)' },
@@ -256,7 +256,7 @@ function PublicHome() {
     <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
 
       {/* ── HERO ── */}
-      <section style={{ padding:'88px 24px 72px', textAlign:'center', position:'relative', overflow:'hidden', background:'radial-gradient(ellipse at 70% -10%,rgba(155,81,224,0.07),transparent 55%),radial-gradient(ellipse at 20% 100%,rgba(0,242,254,0.05),transparent 50%)' }}>
+      <section style={{ padding:'clamp(48px,8vw,88px) 16px 48px', textAlign:'center', position:'relative', overflow:'hidden', background:'radial-gradient(ellipse at 70% -10%,rgba(155,81,224,0.07),transparent 55%),radial-gradient(ellipse at 20% 100%,rgba(0,242,254,0.05),transparent 50%)' }}>
         <div style={{ position:'relative', zIndex:1, maxWidth:760, margin:'0 auto' }}>
 
           {/* Badge */}
@@ -275,7 +275,7 @@ function PublicHome() {
           </p>
 
           {/* CTA buttons — SkillBridge style */}
-          <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
             <button onClick={()=>navigate('/register')}
               style={{ padding:'14px 32px', borderRadius:50, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:15, background:'linear-gradient(135deg,#00F2FE,#9B51E0)', color:'#000', border:'none', cursor:'pointer', boxShadow:'0 6px 28px rgba(0,242,254,0.28)', transition:'all 0.3s', display:'flex', alignItems:'center', gap:8 }}
               onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04)'}
@@ -297,7 +297,7 @@ function PublicHome() {
 
       {/* ── STATS BAR ── */}
       <section style={{ background:'var(--surface)', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)', padding:'28px 24px' }}>
-        <div style={{ maxWidth:1000, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:0 }}>
+        <div style={{ maxWidth:1000, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:0 }}>
           {[
             { val:'500+',                    label:'Events Available',  icon:'bi-calendar-event', color:'var(--cyan)'   },
             { val:liveCount.toLocaleString(), label:'Attendees Served', icon:'bi-people-fill',    color:'var(--purple)' },
@@ -322,7 +322,7 @@ function PublicHome() {
               Why <span className="grad">EventSphere?</span>
             </h2>
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:14 }}>
             {FEATURES.map((f,i)=>(
               <div key={i} className="stat-card card-hover">
                 <div style={{ width:44, height:44, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:14, background:`${f.color}15`, border:`1px solid ${f.color}25` }}>
@@ -348,7 +348,7 @@ function PublicHome() {
           {/* Connector line */}
           <div style={{ position:'relative' }}>
             <div style={{ position:'absolute', top:38, left:'10%', right:'10%', height:2, background:`linear-gradient(90deg,var(--cyan),var(--purple),var(--mint),var(--amber))`, opacity:0.2, zIndex:0 }}/>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:20, position:'relative', zIndex:1 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:16, position:'relative', zIndex:1 }}>
               {STEPS.map((s,i)=>(
                 <div key={i} className="card-hover" style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:'32px 24px', textAlign:'center', boxShadow:'var(--shadow)' }}>
                   <div style={{ width:68, height:68, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', background:`${s.color}15`, border:`2px solid ${s.color}30` }}>
