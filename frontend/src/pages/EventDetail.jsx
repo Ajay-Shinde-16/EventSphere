@@ -88,11 +88,13 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
     VIP: '#FFB300', Premium: '#9B51E0', Gold: '#FFD700',
     Silver: 'var(--muted)', General: '#00F2FE', Standard: '#4FC3F7', Economy: '#05FF9B',
   };
-  const getTierColor = (name) => {
+  // Fallback palette cycles for any custom tier name (e.g. "Tier 3", "Balcony", etc.)
+  const fallbackPalette = ['#00F2FE', '#9B51E0', '#05FF9B', '#FFB300', '#FF4081', '#4FC3F7'];
+  const getTierColor = (name, index = 0) => {
     for (const [k, v] of Object.entries(tierColors)) {
       if (name.toLowerCase().includes(k.toLowerCase())) return v;
     }
-    return 'var(--muted)';
+    return fallbackPalette[index % fallbackPalette.length];
   };
 
   return (
@@ -106,8 +108,8 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
       </div>
 
       {/* Tier blocks */}
-      {tierBlocks.map(({ tier, rows }) => {
-        const tColor = getTierColor(tier.name);
+      {tierBlocks.map(({ tier, rows }, tierIdx) => {
+        const tColor = getTierColor(tier.name, tierIdx);
         return (
           <div key={tier.name} style={{ marginBottom: 28 }}>
             {/* Tier header */}
@@ -580,7 +582,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
           {/* Seat Grid */}
           <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
             <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1rem', color:'var(--purple)', marginBottom:6, display:'flex', alignItems:'center', gap:8 }}>
-              <i className="bi bi-grid-3x3-gap"/>Select Your Seat
+              <i className="bi bi-grid-3x3-gap"/>{isOrg ? 'Seat Availability' : 'Select Your Seat'}
             </h2>
             <p style={{ color:'var(--muted)', fontSize:12, marginBottom:20 }}>
               {isOrg ? 'Seat availability overview for this event.' : `Click seats below to choose specific seats (optional) — ${selectedSeats.length} selected`}
@@ -748,7 +750,8 @@ Base your reasoning on category similarity, city match, price range, and tag ove
                   }).map((tier,i) => {
                     const avail = tier.seats-(tier.bookedSeats||0);
                     const tierColors2 = {VIP:'#FFB300',Premium:'#9B51E0',Gold:'#FFD700',Silver:'var(--muted)',General:'#00F2FE',Standard:'#4FC3F7',Economy:'#05FF9B'};
-                    const tCol = Object.entries(tierColors2).find(([k])=>tier.name.toLowerCase().includes(k.toLowerCase()))?.[1]||'var(--muted)';
+                    const fallbackPalette2 = ['#00F2FE','#9B51E0','#05FF9B','#FFB300','#FF4081','#4FC3F7'];
+                    const tCol = Object.entries(tierColors2).find(([k])=>tier.name.toLowerCase().includes(k.toLowerCase()))?.[1] || fallbackPalette2[i % fallbackPalette2.length];
                     return (
                       <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:10, marginBottom:6, background:'var(--surface2)', border:'1px solid var(--border)', opacity:avail<=0?0.5:1 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
