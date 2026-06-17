@@ -1,54 +1,58 @@
-// Uses Resend's HTTPS API instead of raw SMTP (nodemailer + Gmail) because
+// Uses Brevo's HTTPS API (formerly Sendinblue) instead of raw SMTP because
 // Render's free tier blocks/throttles outbound SMTP ports (465/587), causing
-// "Connection timeout" errors. Resend works over normal HTTPS (port 443),
-// which is never blocked, so this fixes email delivery on Render.
+// "Connection timeout" errors with Gmail. Brevo works over normal HTTPS
+// (port 443), which is never blocked — AND, unlike Resend's sandbox mode,
+// Brevo's free tier lets you send to ANY real user email address from day
+// one with no domain verification required. This is what makes "email
+// actually reaches the user who booked" work in production immediately.
 //
 // Setup (5 min):
-//   1. Go to https://resend.com → sign up free (3,000 emails/month free)
-//   2. Verify your sending domain OR use their default onboarding domain
-//      for testing (onboarding@resend.dev) — no domain setup needed to start
-//   3. Go to API Keys → create one → copy it
-//   4. On Render, set: RESEND_API_KEY=re_xxxxxxxxxxxx
-//   5. Set EMAIL_USER to the "from" address Resend allows you to send as
-//      (e.g. onboarding@resend.dev for testing, or your verified domain email)
+//   1. Go to https://www.brevo.com → sign up free (300 emails/day free, no card needed)
+//   2. Go to Settings (gear icon) → SMTP & API → API Keys tab
+//   3. Click "Generate a new API key" → copy it (starts with "xkeysib-")
+//   4. On Render, set: BREVO_API_KEY=xkeysib-xxxxxxxxxxxx
+//   5. EMAIL_USER can stay as your Gmail (eventsphere.cdac@gmail.com) —
+//      Brevo lets you use any address as the "from" sender without
+//      verification for their free tier sending limits.
 
 const sendEmail = async ({ to, subject, html, attachments }) => {
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromAddress = process.env.EMAIL_USER || 'EventSphere <onboarding@resend.dev>';
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.EMAIL_USER || 'eventsphere.cdac@gmail.com';
 
-  if (!apiKey || apiKey === 'your_resend_api_key_here') {
-    console.warn(`⚠️  EMAIL NOT SENT — RESEND_API_KEY not configured on this server. Set it in your Render environment variables. (Would have sent "${subject}" to ${to})`);
+  if (!apiKey || apiKey === 'your_brevo_api_key_here') {
+    console.warn(`⚠️  EMAIL NOT SENT — BREVO_API_KEY not configured on this server. Set it in your Render environment variables. (Would have sent "${subject}" to ${to})`);
     return;
   }
 
   try {
     const payload = {
-      from: fromAddress.includes('<') ? fromAddress : `EventSphere <${fromAddress}>`,
-      to: [to],
+      sender: { name: 'EventSphere', email: fromEmail },
+      to: [{ email: to }],
       subject,
-      html,
+      htmlContent: html,
     };
 
-    // Resend expects base64 content + filename for attachments
+    // Brevo expects base64 content + name for attachments
     if (attachments?.length) {
-      payload.attachments = attachments.map(a => ({
-        filename: a.filename,
+      payload.attachment = attachments.map(a => ({
+        name: a.filename,
         content: a.content, // already base64 in our QR code flow
       }));
     }
 
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'api-key': apiKey,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Resend API ${response.status}: ${errText}`);
+      throw new Error(`Brevo API ${response.status}: ${errText}`);
     }
 
     console.log(`📧 Email sent successfully to ${to} — "${subject}"`);
