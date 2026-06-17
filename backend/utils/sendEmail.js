@@ -1,20 +1,56 @@
-const nodemailer = require('nodemailer');
+// Uses Resend's HTTPS API instead of raw SMTP (nodemailer + Gmail) because
+// Render's free tier blocks/throttles outbound SMTP ports (465/587), causing
+// "Connection timeout" errors. Resend works over normal HTTPS (port 443),
+// which is never blocked, so this fixes email delivery on Render.
+//
+// Setup (5 min):
+//   1. Go to https://resend.com → sign up free (3,000 emails/month free)
+//   2. Verify your sending domain OR use their default onboarding domain
+//      for testing (onboarding@resend.dev) — no domain setup needed to start
+//   3. Go to API Keys → create one → copy it
+//   4. On Render, set: RESEND_API_KEY=re_xxxxxxxxxxxx
+//   5. Set EMAIL_USER to the "from" address Resend allows you to send as
+//      (e.g. onboarding@resend.dev for testing, or your verified domain email)
 
 const sendEmail = async ({ to, subject, html, attachments }) => {
-  if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_gmail@gmail.com' || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'your_gmail_app_password') {
-    console.warn(`⚠️  EMAIL NOT SENT — EMAIL_USER/EMAIL_PASS not configured on this server. Set them in your Render environment variables. (Would have sent "${subject}" to ${to})`);
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromAddress = process.env.EMAIL_USER || 'EventSphere <onboarding@resend.dev>';
+
+  if (!apiKey || apiKey === 'your_resend_api_key_here') {
+    console.warn(`⚠️  EMAIL NOT SENT — RESEND_API_KEY not configured on this server. Set it in your Render environment variables. (Would have sent "${subject}" to ${to})`);
     return;
   }
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  });
+
   try {
-    await transporter.sendMail({
-      from: `"EventSphere" <${process.env.EMAIL_USER}>`,
-      to, subject, html,
-      attachments: attachments || [],
+    const payload = {
+      from: fromAddress.includes('<') ? fromAddress : `EventSphere <${fromAddress}>`,
+      to: [to],
+      subject,
+      html,
+    };
+
+    // Resend expects base64 content + filename for attachments
+    if (attachments?.length) {
+      payload.attachments = attachments.map(a => ({
+        filename: a.filename,
+        content: a.content, // already base64 in our QR code flow
+      }));
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Resend API ${response.status}: ${errText}`);
+    }
+
     console.log(`📧 Email sent successfully to ${to} — "${subject}"`);
   } catch (err) {
     console.error(`❌ Email FAILED to ${to} — "${subject}": ${err.message}`);
