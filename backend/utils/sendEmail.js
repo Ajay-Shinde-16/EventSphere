@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async ({ to, subject, html, attachments }) => {
-  if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'eventsphere.cdac@gmail.com' || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'nghfgkcdqwjbyzhk') {
+  if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_gmail@gmail.com' || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'your_gmail_app_password') {
     console.warn(`⚠️  EMAIL NOT SENT — EMAIL_USER/EMAIL_PASS not configured on this server. Set them in your Render environment variables. (Would have sent "${subject}" to ${to})`);
     return;
   }
