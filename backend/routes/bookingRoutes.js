@@ -52,15 +52,23 @@ router.post('/', protect, async (req, res) => {
     if (tierIdx >= 0) event.tiers[tierIdx].bookedSeats = (event.tiers[tierIdx].bookedSeats || 0) + seats;
     await event.save();
 
-    // Send confirmation email (non-blocking)
-    try {
-      const emailOpts = bookingConfirmationEmail(req.user, event, booking);
-      await sendEmail(emailOpts);
-    } catch (e) { console.log('Email error (non-fatal):', e.message); }
-
     const populated = await Booking.findById(booking._id)
       .populate('event', 'title date time venue city category tiers');
+
+    // Respond to the user IMMEDIATELY — don't make them wait for the email to send.
     res.status(201).json(populated);
+
+    // Send confirmation email truly in the background (fire-and-forget).
+    // This runs AFTER the response above, so slow SMTP/Gmail latency never
+    // delays the booking itself.
+    setImmediate(async () => {
+      try {
+        const emailOpts = bookingConfirmationEmail(req.user, event, populated);
+        await sendEmail(emailOpts);
+      } catch (e) {
+        console.log('Email error (non-fatal):', e.message);
+      }
+    });
   } catch (err) {
     console.error('Booking error:', err.message);
     res.status(500).json({ message: 'Booking failed: ' + err.message });
