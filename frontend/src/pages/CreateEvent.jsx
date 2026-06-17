@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../services/api';
@@ -33,6 +33,13 @@ export default function CreateEvent() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPhase, setAiPhase] = useState('');
   const [msg, setMsg] = useState('');
+
+  // Auto-update Total Seats whenever any tier's seat count changes
+  useEffect(() => {
+    if (form.isFree) return; // free events manage totalSeats directly
+    const sum = tiers.reduce((acc, t) => acc + (Number(t.seats) || 0), 0);
+    setForm(f => (f.totalSeats === sum ? f : { ...f, totalSeats: sum }));
+  }, [tiers, form.isFree]);
 
   const categories = ['Tech','Music','Sports','Food','Art','Business','Other'];
 
@@ -230,7 +237,14 @@ Return ONLY a JSON object (no markdown, no explanation):
                     {categories.map(c=><option key={c}>{c}</option>)}
                   </select>
                 </div>
-                <div><label className="fl">Total Seats *</label><input type="number" className="fi" min="1" value={form.totalSeats} onChange={e=>setForm({...form,totalSeats:Number(e.target.value)})} required/></div>
+                <div>
+                  <label className="fl">Total Seats * {!form.isFree && <span style={{ color:'var(--cyan)', fontWeight:600, textTransform:'none', letterSpacing:0 }}>(auto from tiers)</span>}</label>
+                  <input type="number" className="fi" min="1" value={form.totalSeats}
+                    readOnly={!form.isFree}
+                    onChange={e=>form.isFree && setForm({...form,totalSeats:Number(e.target.value)})}
+                    style={!form.isFree ? { cursor:'not-allowed', opacity:0.75 } : undefined}
+                    required/>
+                </div>
                 <div style={{ gridColumn: isMobile ? '1' : '1 / -1' }}>
                   <label className="fl">Tags (comma separated)</label>
                   <input className="fi" placeholder="AI, Workshop, Networking, 2026" value={form.tags} onChange={e=>setForm({...form,tags:e.target.value})}/>

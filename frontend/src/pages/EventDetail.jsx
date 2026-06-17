@@ -418,6 +418,8 @@ Base your reasoning on category similarity, city match, price range, and tag ove
       }
       setBooking(createdBookings); // array of bookings
       launchConfetti();
+      // Auto-scroll to top so the success message is immediately visible
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) { setBMsg(err.response?.data?.message || 'Booking failed'); }
     finally { setBL(false); }
   };
@@ -621,7 +623,8 @@ Base your reasoning on category similarity, city match, price range, and tag ove
             </div>
           </div>
 
-          {/* Rate this event */}
+          {/* Rate this event — attendees only, not organizers/admins */}
+          {!isOrg && (
           <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
             <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1rem', color:'var(--amber)', marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
               <i className="bi bi-star-fill"/>Rate This Event
@@ -646,6 +649,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
               </>
             )}
           </div>
+          )}
 
           {/* ── AI SMART RECOMMENDATIONS ── */}
           <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
@@ -849,7 +853,54 @@ Base your reasoning on category similarity, city match, price range, and tag ove
                 </div>
               </div>
             </div>
-          ) : null}
+          ) : (
+            /* Organizer / Admin panel — manage, don't book */
+            <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position: isMobile ? 'static' : 'sticky', top:86 }}>
+              <div style={{ height:4, background:`linear-gradient(90deg,${cat.color},#9B51E0)` }}/>
+              <div style={{ padding:24 }}>
+                <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.1rem', marginBottom:20, color:'var(--heading)', display:'flex', alignItems:'center', gap:8 }}>
+                  <i className="bi bi-megaphone-fill" style={{ color:cat.color }}/>Organizer View
+                </h3>
+
+                {/* Seat fill stat */}
+                <div style={{ marginBottom:18 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <span style={{ fontSize:12, color:'var(--muted)' }}>Seats Booked</span>
+                    <span style={{ fontSize:13, fontWeight:800, color:cat.color }}>{event.bookedSeats} / {event.totalSeats}</span>
+                  </div>
+                  <div style={{ height:6, background:'var(--surface2)', borderRadius:4 }}>
+                    <div style={{ height:'100%', width:`${Math.min(100,(event.bookedSeats/event.totalSeats)*100)}%`, background:`linear-gradient(90deg,${cat.color},#9B51E0)`, borderRadius:4, transition:'width 0.4s' }}/>
+                  </div>
+                </div>
+
+                {/* Status badge */}
+                <div style={{ marginBottom:18, padding:'10px 14px', borderRadius:12, background: event.status==='approved' ? 'rgba(52,211,153,0.08)' : event.status==='pending' ? 'rgba(251,191,36,0.08)' : 'rgba(244,114,182,0.08)', border:`1px solid ${event.status==='approved' ? 'rgba(52,211,153,0.25)' : event.status==='pending' ? 'rgba(251,191,36,0.25)' : 'rgba(244,114,182,0.25)'}`, display:'flex', alignItems:'center', gap:8 }}>
+                  <i className={`bi ${event.status==='approved'?'bi-check-circle-fill':event.status==='pending'?'bi-hourglass-split':'bi-x-circle-fill'}`}
+                    style={{ color: event.status==='approved' ? 'var(--mint)' : event.status==='pending' ? 'var(--amber)' : 'var(--pink)' }}/>
+                  <span style={{ fontSize:12, fontWeight:700, color: event.status==='approved' ? 'var(--mint)' : event.status==='pending' ? 'var(--amber)' : 'var(--pink)', textTransform:'capitalize' }}>
+                    {event.status === 'approved' ? 'Live & accepting bookings' : event.status === 'pending' ? 'Awaiting admin approval' : 'Rejected'}
+                  </span>
+                </div>
+
+                {/* Quick actions */}
+                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  <button onClick={() => navigate('/org-dashboard')}
+                    style={{ width:'100%', padding:'12px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:13, background:`linear-gradient(135deg,${cat.color},#9B51E0)`, color:'#000', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                    <i className="bi bi-graph-up-arrow"/>View Bookings & Analytics
+                  </button>
+                  <button onClick={() => navigate('/scan-qr')}
+                    style={{ width:'100%', padding:'12px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:13, background:'var(--surface2)', border:'1px solid var(--border)', color:'var(--text)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                    <i className="bi bi-qr-code-scan"/>Scan Tickets at Entry
+                  </button>
+                </div>
+
+                <div style={{ marginTop:18, padding:'10px 12px', borderRadius:10, background:'var(--surface2)', fontSize:11, color:'var(--muted)', display:'flex', alignItems:'flex-start', gap:6 }}>
+                  <i className="bi bi-info-circle" style={{ marginTop:1, flexShrink:0 }}/>
+                  You're viewing this as the organizer — bookings and ratings are managed by attendees, not shown here.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

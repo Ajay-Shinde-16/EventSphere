@@ -1,19 +1,25 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async ({ to, subject, html, attachments }) => {
-  if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_gmail@gmail.com') {
-    console.log(`📧 [Email Skipped - configure EMAIL_USER in .env] To: ${to}, Subject: ${subject}`);
+  if (!process.env.EMAIL_USER || process.env.EMAIL_USER === 'eventsphere.cdac@gmail.com' || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'gmiftifszzeycvzy') {
+    console.warn(`⚠️  EMAIL NOT SENT — EMAIL_USER/EMAIL_PASS not configured on this server. Set them in your Render environment variables. (Would have sent "${subject}" to ${to})`);
     return;
   }
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
   });
-  await transporter.sendMail({
-    from: `"EventSphere" <${process.env.EMAIL_USER}>`,
-    to, subject, html,
-    attachments: attachments || [],
-  });
+  try {
+    await transporter.sendMail({
+      from: `"EventSphere" <${process.env.EMAIL_USER}>`,
+      to, subject, html,
+      attachments: attachments || [],
+    });
+    console.log(`📧 Email sent successfully to ${to} — "${subject}"`);
+  } catch (err) {
+    console.error(`❌ Email FAILED to ${to} — "${subject}": ${err.message}`);
+    throw err;
+  }
 };
 
 /* Convert raw seat number to A-01 format using event tiers */
@@ -333,4 +339,3 @@ const forgotPasswordEmail = (user, resetUrl) => {
 };
 
 module.exports = { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail, forgotPasswordEmail };
-
