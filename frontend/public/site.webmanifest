@@ -1,0 +1,14 @@
+{
+  "name": "EventSphere — Elite Event Management Platform",
+  "short_name": "EventSphere",
+  "description": "Smart ticketing, real QR tickets, interactive seat grids, AI suggestions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080C14",
+  "theme_color": "#38BDF8",
+  "icons": [
+    { "src": "/favicon-32.png", "sizes": "32x32",   "type": "image/png" },
+    { "src": "/logo192.png",    "sizes": "192x192",  "type": "image/png" },
+    { "src": "/logo512.png",    "sizes": "512x512",  "type": "image/png", "purpose": "any maskable" }
+  ]
+}
