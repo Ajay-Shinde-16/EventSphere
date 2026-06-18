@@ -104,12 +104,25 @@ router.get('/event/:id', protect, organizerOnly, async (req, res) => {
 });
 
 // Check-in by booking code
+// Check-in by booking code — scoped to a specific event so organizers
+// can't accidentally check a ticket into the wrong event's gate.
 router.put('/checkin/:code', protect, organizerOnly, async (req, res) => {
   try {
+    const { eventId } = req.body; // which event the organizer is currently scanning for
     const booking = await Booking.findOne({ bookingCode: req.params.code })
       .populate('event', 'title date time venue city category tiers')
       .populate('user', 'name email');
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    // Reject if this ticket belongs to a different event than the one selected
+    if (eventId && booking.event?._id?.toString() !== eventId.toString()) {
+      return res.status(400).json({
+        message: `This ticket is for "${booking.event?.title}" — not the event you're currently checking in for.`,
+        wrongEvent: true,
+        booking,
+      });
+    }
+
     if (booking.status === 'cancelled') return res.status(400).json({ message: 'Booking is cancelled' });
     if (booking.checkedIn) return res.status(400).json({ message: 'Already checked in', booking });
     booking.checkedIn = true;

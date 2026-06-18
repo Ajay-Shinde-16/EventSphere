@@ -256,32 +256,51 @@ export default function ScanQR() {
   const [recentCodes, setRecentCodes] = useState([]);
   const [scannedBooking, setScannedBooking] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [myEvents, setMyEvents]     = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null); // organizer must pick this before scanning
+  const [loadingEvents, setLoadingEvents] = useState(true);
   const { user } = useAuth();
   const navigate  = useNavigate();
   const { isMobile } = useResponsive();
 
   useEffect(() => {
     if (!user || user.role === 'attendee') { navigate('/'); return; }
-    loadRecentCodes();
+    loadMyEvents();
   }, []);
 
-  const loadRecentCodes = async () => {
+  const loadMyEvents = async () => {
+    setLoadingEvents(true);
     try {
       const { data: events } = await getMyEvents();
-      if (events?.length > 0) {
-        const { data: bookings } = await getEventBookings(events[0]._id);
-        setRecentCodes(bookings?.slice(0,6).map(b => b.bookingCode) || []);
-      }
+      setMyEvents(events || []);
     } catch {}
+    finally { setLoadingEvents(false); }
+  };
+
+  const loadRecentCodes = async (eventId) => {
+    try {
+      const { data: bookings } = await getEventBookings(eventId);
+      setRecentCodes(bookings?.slice(0,6).map(b => b.bookingCode) || []);
+    } catch {}
+  };
+
+  const chooseEvent = (ev) => {
+    setSelectedEvent(ev);
+    setResult(null);
+    setScannedBooking(null);
+    setHistory([]);
+    setCode('');
+    loadRecentCodes(ev._id);
   };
 
   const handleCheckIn = async (checkCode) => {
     const c = (checkCode || code).trim().toUpperCase();
     if (!c) { setResult({ error: 'Please enter a booking code' }); return; }
+    if (!selectedEvent) { setResult({ error: 'Please select an event first' }); return; }
     setLoading(true); setScanning(true); setCameraOpen(false);
     await new Promise(r => setTimeout(r, 600));
     try {
-      const { data } = await checkIn(c);
+      const { data } = await checkIn(c, selectedEvent._id);
       setResult({ success: true });
       setScannedBooking(data.booking);
       setHistory(h => [{
@@ -294,13 +313,14 @@ export default function ScanQR() {
     } catch (err) {
       const msg = err.response?.data?.message || 'Invalid booking code';
       const alreadyIn = msg.toLowerCase().includes('already');
-      setResult({ error: msg, alreadyIn });
-      if (alreadyIn && err.response?.data?.booking) setScannedBooking(err.response.data.booking);
+      const wrongEvent = err.response?.data?.wrongEvent;
+      setResult({ error: msg, alreadyIn, wrongEvent });
+      if ((alreadyIn || wrongEvent) && err.response?.data?.booking) setScannedBooking(null); // don't auto-open ticket for wrong-event, just show the message
       setHistory(h => [{
         code:c, name: err.response?.data?.booking?.user?.name||'—',
         event: err.response?.data?.booking?.event?.title||'',
         time: new Date().toLocaleTimeString(), success: false,
-        fullBooking: err.response?.data?.booking,
+        fullBooking: alreadyIn ? err.response?.data?.booking : null,
       }, ...h.slice(0,19)]);
     } finally {
       setLoading(false);
@@ -308,6 +328,69 @@ export default function ScanQR() {
     }
   };
 
+
+  // ── Step 1: Event selection screen — shown until organizer picks an event ──
+  if (!selectedEvent) {
+    return (
+      <div className="fade-up" style={{ minHeight:'calc(100vh - 60px)', padding: isMobile ? '20px 14px' : '40px 24px' }}>
+        <div style={{ maxWidth:760, margin:'0 auto' }}>
+          <div className="pgh" style={{ marginBottom:24 }}>
+            <h2 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:900,fontSize:'1.2rem',marginBottom:4,color:'var(--heading)',display:'flex',alignItems:'center',gap:10 }}>
+              <i className="bi bi-qr-code-scan" style={{ color:'var(--mint)' }}/>QR Check-in Terminal
+            </h2>
+            <p style={{ color:'var(--muted)',fontSize:13 }}>Select which event you're checking attendees in for</p>
+          </div>
+
+          {loadingEvents ? (
+            <div style={{ textAlign:'center', padding:'60px 0' }}>
+              <div style={{ width:36,height:36,border:'3px solid var(--surface2)',borderTopColor:'var(--mint)',borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto' }}/>
+            </div>
+          ) : myEvents.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'60px 24px', background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20 }}>
+              <i className="bi bi-calendar-x" style={{ fontSize:40, color:'var(--muted)', display:'block', marginBottom:12 }}/>
+              <p style={{ color:'var(--muted)', fontSize:14 }}>You don't have any events yet.</p>
+              <button onClick={() => navigate('/create-event')}
+                style={{ marginTop:16, padding:'10px 24px', borderRadius:50, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:13, background:'linear-gradient(135deg,#05FF9B,#00F2FE)', color:'#000', border:'none', cursor:'pointer' }}>
+                Create Your First Event
+              </button>
+            </div>
+          ) : (
+            <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2,1fr)', gap:14 }}>
+              {myEvents.map(ev => {
+                const cat = CAT_CONFIG[ev.category] || CAT_CONFIG.Other;
+                const dateStr = ev.date ? new Date(ev.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
+                return (
+                  <button key={ev._id} onClick={() => chooseEvent(ev)}
+                    className="card-hover"
+                    style={{ textAlign:'left', background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:16, padding:18, cursor:'pointer', position:'relative', overflow:'hidden' }}>
+                    <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${cat.color},#9B51E0)` }}/>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                      <span style={{ fontSize:16 }}>{cat.emoji}</span>
+                      <span style={{ padding:'2px 10px', borderRadius:20, fontSize:10, fontWeight:700, background:`${cat.color}15`, color:cat.color }}>{ev.category}</span>
+                      {ev.status !== 'approved' && (
+                        <span style={{ padding:'2px 10px', borderRadius:20, fontSize:10, fontWeight:700, background:'rgba(251,191,36,0.1)', color:'var(--amber)' }}>{ev.status}</span>
+                      )}
+                    </div>
+                    <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:15, color:'var(--heading)', marginBottom:6 }}>{ev.title}</div>
+                    <div style={{ fontSize:12, color:'var(--muted)', display:'flex', flexDirection:'column', gap:3 }}>
+                      <span><i className="bi bi-calendar-event me-1"/>{dateStr} · {ev.time}</span>
+                      <span><i className="bi bi-geo-alt me-1"/>{ev.venue}, {ev.city}</span>
+                      <span><i className="bi bi-people me-1"/>{ev.bookedSeats || 0} / {ev.totalSeats} booked</span>
+                    </div>
+                    <div style={{ marginTop:12, fontSize:12, fontWeight:700, color:cat.color, display:'flex', alignItems:'center', gap:6 }}>
+                      Start checking in <i className="bi bi-arrow-right"/>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step 2: Scanner screen — shown once an event is selected ──
   return (
     <div style={{ display:'flex', minHeight:'calc(100vh - 60px)', flexDirection:'row' }}>
 
@@ -327,11 +410,22 @@ export default function ScanQR() {
       </div>
 
       <div className="fade-up" style={{ flex:1, padding: isMobile ? '14px' : '24px', minWidth:0 }}>
-        <div className="pgh" style={{ marginBottom:24 }}>
+        <div className="pgh" style={{ marginBottom:16 }}>
           <h2 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:900,fontSize:'1.2rem',marginBottom:4,color:'var(--heading)',display:'flex',alignItems:'center',gap:10 }}>
             <i className="bi bi-qr-code-scan" style={{ color:'var(--mint)' }}/>QR Check-in Terminal
           </h2>
           <p style={{ color:'var(--muted)',fontSize:13 }}>Scan with camera or enter booking code manually</p>
+        </div>
+
+        {/* Currently selected event banner */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:14, background:'rgba(5,255,155,0.06)', border:'1px solid rgba(5,255,155,0.2)', marginBottom:20, flexWrap:'wrap' }}>
+          <i className="bi bi-broadcast" style={{ color:'var(--mint)', fontSize:16 }}/>
+          <span style={{ fontSize:12, color:'var(--muted)' }}>Checking in for:</span>
+          <span style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:13, color:'var(--heading)' }}>{selectedEvent.title}</span>
+          <button onClick={() => setSelectedEvent(null)}
+            style={{ marginLeft:'auto', padding:'5px 14px', borderRadius:50, fontSize:11, fontWeight:700, background:'var(--surface2)', border:'1px solid var(--border)', color:'var(--muted)', cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+            <i className="bi bi-arrow-left-right"/>Change Event
+          </button>
         </div>
 
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 14 : 20 }}>
@@ -399,10 +493,18 @@ export default function ScanQR() {
 
             {/* Error result */}
             {result && !result.success && !scannedBooking && (
-              <div className="fade-up" style={{ marginTop:14,borderRadius:12,padding:14,background:result.alreadyIn?'rgba(255,179,0,0.07)':'rgba(255,64,129,0.07)',border:`1px solid ${result.alreadyIn?'rgba(255,179,0,0.25)':'rgba(255,64,129,0.25)'}` }}>
-                <div style={{ display:'flex',alignItems:'center',gap:8 }}>
-                  <i className={`bi ${result.alreadyIn?'bi-info-circle-fill':'bi-x-circle-fill'}`} style={{ color:result.alreadyIn?'var(--amber)':'var(--pink)',fontSize:18 }}/>
-                  <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:13,color:result.alreadyIn?'var(--amber)':'var(--pink)' }}>{result.error}</span>
+              <div className="fade-up" style={{ marginTop:14,borderRadius:12,padding:14,
+                background: result.wrongEvent ? 'rgba(167,139,250,0.07)' : result.alreadyIn?'rgba(255,179,0,0.07)':'rgba(255,64,129,0.07)',
+                border: `1px solid ${result.wrongEvent ? 'rgba(167,139,250,0.3)' : result.alreadyIn?'rgba(255,179,0,0.25)':'rgba(255,64,129,0.25)'}` }}>
+                <div style={{ display:'flex',alignItems:'flex-start',gap:8 }}>
+                  <i className={`bi ${result.wrongEvent ? 'bi-shuffle' : result.alreadyIn?'bi-info-circle-fill':'bi-x-circle-fill'}`}
+                    style={{ color: result.wrongEvent ? 'var(--purple)' : result.alreadyIn?'var(--amber)':'var(--pink)', fontSize:18, marginTop:1, flexShrink:0 }}/>
+                  <div>
+                    {result.wrongEvent && (
+                      <div style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:13,color:'var(--purple)',marginBottom:2 }}>Wrong Event Ticket</div>
+                    )}
+                    <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight: result.wrongEvent ? 600 : 800,fontSize:13,color: result.wrongEvent ? 'var(--text)' : result.alreadyIn?'var(--amber)':'var(--pink)' }}>{result.error}</span>
+                  </div>
                 </div>
               </div>
             )}
