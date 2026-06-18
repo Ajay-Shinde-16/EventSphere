@@ -125,7 +125,7 @@ function SeatGrid({ event, selectedSeats, bookedSeatNumbers = [], onToggleSeat }
             {/* Rows */}
             <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
               {rows.map(({ rowLabel, seats }) => (
-                <div key={rowLabel} style={{ display: 'grid', gridTemplateColumns: `22px repeat(${seats.length}, 1fr)`, gap: 3, marginBottom: 5, alignItems: 'center' }}>
+                <div key={rowLabel} style={{ display: 'grid', gridTemplateColumns: `22px repeat(${seats.length}, 26px)`, gap: 3, marginBottom: 5, alignItems: 'center', width: 'max-content' }}>
                   {/* Row label */}
                   <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 11, color: tColor }}>
                     {rowLabel}

@@ -272,11 +272,15 @@ Return ONLY a JSON object (no markdown, no explanation):
                   </button>
                 </div>
                 {tiers.map((tier,i) => (
-                  <div key={i} style={{ display:'flex', gap:10, marginBottom:10, alignItems:'center' }}>
-                    <div style={{ width:3, height:40, borderRadius:4, background:tierColors[i%5], flexShrink:0 }}/>
-                    <input className="fi" style={{ flex:1.5 }} placeholder="Tier name" value={tier.name} onChange={e=>updateTier(i,'name',e.target.value)}/>
-                    <input type="number" className="fi" style={{ flex:1 }} placeholder="₹ Price" value={tier.price} onChange={e=>updateTier(i,'price',Number(e.target.value))}/>
-                    <input type="number" className="fi" style={{ flex:1 }} placeholder="Seats" value={tier.seats} onChange={e=>updateTier(i,'seats',Number(e.target.value))}/>
+                  <div key={i} style={{ display:'flex', gap:10, marginBottom:10, alignItems: isMobile ? 'flex-start' : 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+                    <div style={{ width:3, height: isMobile ? 'auto' : 40, alignSelf: isMobile ? 'stretch' : 'auto', borderRadius:4, background:tierColors[i%5], flexShrink:0 }}/>
+                    <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:10, flex:1, minWidth:0 }}>
+                      <input className="fi" style={{ flex: isMobile ? 'unset' : 1.5, width: isMobile ? '100%' : undefined }} placeholder="Tier name" value={tier.name} onChange={e=>updateTier(i,'name',e.target.value)}/>
+                      <div style={{ display:'flex', gap:10 }}>
+                        <input type="number" className="fi" style={{ flex:1 }} placeholder="₹ Price" value={tier.price} onChange={e=>updateTier(i,'price',Number(e.target.value))}/>
+                        <input type="number" className="fi" style={{ flex:1 }} placeholder="Seats" value={tier.seats} onChange={e=>updateTier(i,'seats',Number(e.target.value))}/>
+                      </div>
+                    </div>
                     {tiers.length > 1 && (
                       <button type="button" onClick={()=>removeTier(i)}
                         style={{ width:36, height:36, borderRadius:10, background:'rgba(244,114,182,0.08)', border:'1px solid rgba(244,114,182,0.2)', color:'var(--pink)', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>

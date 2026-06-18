@@ -139,7 +139,7 @@ export default function Profile() {
         {/* Quick navigation */}
         <div style={card}>
           <h2 style={{ fontSize:11, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:2, marginBottom:16 }}>Quick Navigation</h2>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10 }}>
             {navLinks.map((link,i) => (
               <Link key={i} to={link.to}
                 style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:14, background:'var(--surface2)', border:'1px solid var(--border)', textDecoration:'none', transition:'all 0.2s' }}
