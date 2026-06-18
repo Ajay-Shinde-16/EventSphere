@@ -139,7 +139,7 @@ export default function Navbar() {
                 </div>
                 {!isMobile && (
                   <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>Smart Ticketing</div>
-                )}
+                )}\
               </div>
             )}
           </div>
@@ -392,6 +392,43 @@ export default function Navbar() {
               <i className="bi bi-ticket-perforated" style={{ fontSize: 16, width: 20, textAlign: 'center' }} />
               My Tickets
             </button>
+          )}
+
+          {/* Organizer-only quick links — desktop sidebar (Create Event, QR Check-in)
+              is hidden on mobile, so these need a mobile-menu home too. */}
+          {user?.role === 'organizer' && (
+            <>
+              <button
+                onClick={() => { navigate('/create-event'); setMenuOpen(false); }}
+                style={{
+                  width: '100%', padding: '12px 14px', marginBottom: 4,
+                  borderRadius: 10, fontFamily: "'Space Grotesk',sans-serif",
+                  fontWeight: 700, fontSize: 14, textAlign: 'left',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
+                  background: isActive('/create-event') ? 'rgba(0,242,254,0.08)' : 'transparent',
+                  border: isActive('/create-event') ? '1px solid rgba(0,242,254,0.2)' : '1px solid transparent',
+                  color: isActive('/create-event') ? 'var(--cyan)' : 'var(--text)',
+                }}
+              >
+                <i className="bi bi-plus-circle" style={{ fontSize: 16, width: 20, textAlign: 'center' }} />
+                Create Event
+              </button>
+              <button
+                onClick={() => { navigate('/scan-qr'); setMenuOpen(false); }}
+                style={{
+                  width: '100%', padding: '12px 14px', marginBottom: 4,
+                  borderRadius: 10, fontFamily: "'Space Grotesk',sans-serif",
+                  fontWeight: 700, fontSize: 14, textAlign: 'left',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
+                  background: isActive('/scan-qr') ? 'rgba(5,255,155,0.08)' : 'transparent',
+                  border: isActive('/scan-qr') ? '1px solid rgba(5,255,155,0.2)' : '1px solid transparent',
+                  color: isActive('/scan-qr') ? 'var(--mint)' : 'var(--text)',
+                }}
+              >
+                <i className="bi bi-qr-code-scan" style={{ fontSize: 16, width: 20, textAlign: 'center' }} />
+                QR Check-in
+              </button>
+            </>
           )}
 
           {/* Divider */}

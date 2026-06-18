@@ -44,10 +44,27 @@ function getSeatLabels(nums, tiers) {
 /* ── Ticket Modal ────────────────────────────────────────────── */
 function ScannedTicketModal({ booking, onClose }) {
   const cat = CAT_CONFIG[booking.event?.category] || CAT_CONFIG.Other;
+
+  // Category-specific greeting shown above the ticket — gives the gate
+  // staff/attendee a friendly, on-brand moment instead of a plain checkmark.
+  const GREETINGS = {
+    Music:    '🎵 Enjoy the show!',
+    Tech:     '💻 Enjoy the summit!',
+    Sports:   '⚽ Enjoy the match!',
+    Food:     '🍽️ Enjoy the feast!',
+    Art:      '🎨 Enjoy the experience!',
+    Business: '💼 Have a great conference!',
+    Other:    '⭐ Enjoy the event!',
+  };
+  const greeting = GREETINGS[booking.event?.category] || GREETINGS.Other;
+
   return (
     <div onClick={onClose} style={{ position:'fixed',inset:0,zIndex:1000,background:'rgba(0,0,0,0.92)',backdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20 }}>
       <div onClick={e=>e.stopPropagation()} style={{ width:'100%',maxWidth:780 }}>
         <div style={{ textAlign:'center',marginBottom:16 }}>
+          <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:20, color:'#fff', marginBottom:10 }}>
+            {greeting}
+          </div>
           <div style={{ display:'inline-flex',alignItems:'center',gap:10,background:'rgba(5,255,155,0.1)',border:'1px solid rgba(5,255,155,0.3)',borderRadius:50,padding:'10px 24px' }}>
             <i className="bi bi-check-circle-fill" style={{ color:'#05FF9B',fontSize:22 }}/>
             <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:16,color:'#05FF9B' }}>Check-In Successful!</span>

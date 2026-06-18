@@ -527,7 +527,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
           <h1 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'clamp(1.6rem,4vw,2.2rem)', color:'var(--heading)', lineHeight:1.2, marginBottom:24 }}>{event.title}</h1>
 
           {/* Info grid — 2 cols */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px 32px', marginBottom:24 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'12px 32px', marginBottom:24 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ width:36, height:36, borderRadius:10, background:`${cat.color}15`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <i className="bi bi-calendar3" style={{ color:cat.color }} />
@@ -595,7 +595,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
       <div style={{ display:'grid', gridTemplateColumns: (isOrg || isMobile) ? '1fr' : '1fr 360px', gap:20 }}>
 
         {/* LEFT */}
-        <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:20, minWidth:0 }}>
 
           {/* About */}
           <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
@@ -764,10 +764,10 @@ Base your reasoning on category similarity, city match, price range, and tag ove
         </div>
 
         {/* RIGHT — Booking / Organizer Panel */}
-        <div>
+        <div style={{ width:'100%', minWidth:0 }}>
           {!isOrg ? (
             /* Booking panel */
-            <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position:'sticky', top:86 }}>
+            <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position: isMobile ? 'static' : 'sticky', top:86, width:'100%' }}>
               <div style={{ height:4, background:`linear-gradient(90deg,${cat.color},#9B51E0)` }}/>
               <div style={{ padding:24 }}>
                 <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.1rem', marginBottom:20, color:'var(--heading)' }}>Book Tickets</h3>
@@ -889,7 +889,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
             </div>
           ) : (
             /* Organizer / Admin panel — manage, don't book */
-            <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position: isMobile ? 'static' : 'sticky', top:86 }}>
+            <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position: isMobile ? 'static' : 'sticky', top:86, width:'100%' }}>
               <div style={{ height:4, background:`linear-gradient(90deg,${cat.color},#9B51E0)` }}/>
               <div style={{ padding:24 }}>
                 <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.1rem', marginBottom:20, color:'var(--heading)', display:'flex', alignItems:'center', gap:8 }}>
