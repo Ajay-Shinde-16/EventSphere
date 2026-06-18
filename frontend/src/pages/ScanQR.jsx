@@ -3,6 +3,7 @@ import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
 import { checkIn, getEventBookings, getMyEvents } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { launchConfetti } from '../utils/confetti';
 
 const CAT_CONFIG = {
   Tech:     { color:'#00F2FE', emoji:'💻', img:'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=70' },
@@ -70,29 +71,34 @@ function ScannedTicketModal({ booking, onClose }) {
             <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:16,color:'#05FF9B' }}>Check-In Successful!</span>
           </div>
         </div>
-        <div style={{ display:'flex',borderRadius:20,overflow:'hidden',boxShadow:`0 32px 80px rgba(0,0,0,0.8),0 0 60px ${cat.color}30`,border:`1px solid ${cat.color}40` }}>
-          <div style={{ flex:1,position:'relative',minHeight:280,overflow:'hidden' }}>
-            <img src={cat.img} alt="" crossOrigin="anonymous" style={{ position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.3) saturate(1.2)' }}/>
-            <div style={{ position:'absolute',inset:0,background:`linear-gradient(135deg,rgba(11,15,25,0.95),rgba(11,15,25,0.7))` }}/>
-            <div style={{ position:'absolute',top:0,left:0,right:0,height:4,background:`linear-gradient(90deg,${cat.color},#9B51E0,#05FF9B)` }}/>
-            <div style={{ position:'relative',zIndex:2,padding:30,height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between' }}>
-              <div>
-                <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:10 }}>
-                  <span style={{ fontSize:18 }}>{cat.emoji}</span>
-                  <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:10,color:cat.color,letterSpacing:4,textTransform:'uppercase' }}>{booking.event?.category}</span>
-                  <span style={{ padding:'2px 10px',borderRadius:20,fontSize:10,fontWeight:700,background:'rgba(5,255,155,0.15)',color:'#05FF9B',border:'1px solid rgba(5,255,155,0.3)',marginLeft:'auto' }}>✓ CHECKED IN</span>
+
+        {/* Horizontal scroll wrapper — keeps the ticket laid out left-to-right
+            (image | dashed divider | QR stub) even on narrow phones, instead
+            of squishing/clipping content. Swipe to see the full ticket. */}
+        <div style={{ overflowX:'auto', paddingBottom:4, WebkitOverflowScrolling:'touch' }}>
+          <div style={{ display:'flex',borderRadius:20,overflow:'hidden',boxShadow:`0 32px 80px rgba(0,0,0,0.8),0 0 60px ${cat.color}30`,border:`1px solid ${cat.color}40`,minWidth:620,width:'max-content' }}>
+            <div style={{ width:380,flexShrink:0,position:'relative',minHeight:280,overflow:'hidden' }}>
+              <img src={cat.img} alt="" crossOrigin="anonymous" style={{ position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.3) saturate(1.2)' }}/>
+              <div style={{ position:'absolute',inset:0,background:`linear-gradient(135deg,rgba(11,15,25,0.95),rgba(11,15,25,0.7))` }}/>
+              <div style={{ position:'absolute',top:0,left:0,right:0,height:4,background:`linear-gradient(90deg,${cat.color},#9B51E0,#05FF9B)` }}/>
+              <div style={{ position:'relative',zIndex:2,padding:30,height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between' }}>
+                <div>
+                  <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:10 }}>
+                    <span style={{ fontSize:18 }}>{cat.emoji}</span>
+                    <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:10,color:cat.color,letterSpacing:4,textTransform:'uppercase' }}>{booking.event?.category}</span>
+                    <span style={{ padding:'2px 10px',borderRadius:20,fontSize:10,fontWeight:700,background:'rgba(5,255,155,0.15)',color:'#05FF9B',border:'1px solid rgba(5,255,155,0.3)',marginLeft:'auto' }}>✓ CHECKED IN</span>
+                  </div>
+                  <div style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:900,fontSize:24,color:'#fff',lineHeight:1.2,marginBottom:14 }}>{booking.event?.title}</div>
+                  <div style={{ background:`${cat.color}10`,border:`1px solid ${cat.color}30`,borderRadius:10,padding:'8px 14px',marginBottom:14,display:'inline-flex',alignItems:'center',gap:8 }}>
+                    <i className="bi bi-person-fill" style={{ color:cat.color }}/>
+                    <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:14,color:'#fff' }}>{booking.user?.name}</span>
+                  </div>
                 </div>
-                <div style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:900,fontSize:24,color:'#fff',lineHeight:1.2,marginBottom:14 }}>{booking.event?.title}</div>
-                <div style={{ background:`${cat.color}10`,border:`1px solid ${cat.color}30`,borderRadius:10,padding:'8px 14px',marginBottom:14,display:'inline-flex',alignItems:'center',gap:8 }}>
-                  <i className="bi bi-person-fill" style={{ color:cat.color }}/>
-                  <span style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:14,color:'#fff' }}>{booking.user?.name}</span>
-                </div>
-              </div>
-              <div>
-                <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16 }}>
-                  {[
-                    {icon:'📅',label:'DATE',val:booking.event?.date?new Date(booking.event.date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'-'},
-                    {icon:'⏰',label:'TIME',val:booking.event?.time||'-'},
+                <div>
+                  <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16 }}>
+                    {[
+                      {icon:'📅',label:'DATE',val:booking.event?.date?new Date(booking.event.date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'-'},
+                      {icon:'⏰',label:'TIME',val:booking.event?.time||'-'},
                     {icon:'📍',label:'VENUE',val:`${booking.event?.venue||''},${booking.event?.city||''}`},
                     {icon:'🪑',label:'SEATS',val:`${booking.seats} × ${booking.tier}`},
                     ...(booking.seatNumbers?.length?[{icon:'💺',label:'SEAT NO',val:getSeatLabels(booking.seatNumbers,booking.event?.tiers)}]:[]),
@@ -133,6 +139,7 @@ function ScannedTicketModal({ booking, onClose }) {
             <div style={{ fontSize:9,fontWeight:700,color:`${cat.color}60`,letterSpacing:3,fontFamily:"'Space Grotesk',sans-serif",textAlign:'center' }}>ADMIT {booking.seats>1?booking.seats:'ONE'}</div>
             <div style={{ fontSize:9,color:'rgba(255,255,255,0.15)',fontFamily:"'Space Grotesk',sans-serif",fontWeight:700 }}>⬡ EVENTSPHERE</div>
           </div>
+        </div>
         </div>
         <div style={{ textAlign:'center',marginTop:16 }}>
           <button onClick={onClose} style={{ padding:'10px 32px',borderRadius:12,fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,background:'rgba(255,255,255,0.06)',color:'#fff',border:'1px solid rgba(255,255,255,0.15)',cursor:'pointer' }}>
@@ -320,6 +327,7 @@ export default function ScanQR() {
       const { data } = await checkIn(c, selectedEvent._id);
       setResult({ success: true });
       setScannedBooking(data.booking);
+      launchConfetti();
       setHistory(h => [{
         code: c, name: data.booking?.user?.name || 'Attendee',
         event: data.booking?.event?.title || '',

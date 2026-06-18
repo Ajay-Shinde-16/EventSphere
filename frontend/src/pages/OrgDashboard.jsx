@@ -243,11 +243,11 @@ export default function OrgDashboard() {
           <div style={{ display:'grid',gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',gap:20 }}>
 
             {/* Bookings bar chart */}
-            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
+            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,minWidth:0,overflow:'hidden' }}>
               <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--cyan)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                 <i className="bi bi-bar-chart"/>Bookings per Event
               </h3>
-              <div style={{ height:220 }}>
+              <div style={{ height:220, width:'100%', position:'relative' }}>
                 {events.length > 0
                   ? <Bar data={barData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/>
                   : <div style={{textAlign:'center',padding:60,color:'var(--muted)',fontSize:13}}>No events yet</div>}
@@ -255,11 +255,11 @@ export default function OrgDashboard() {
             </div>
 
             {/* Category doughnut */}
-            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
+            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,minWidth:0,overflow:'hidden' }}>
               <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--purple)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                 <i className="bi bi-pie-chart"/>Events by Category
               </h3>
-              <div style={{ height:220 }}>
+              <div style={{ height:220, width:'100%', position:'relative' }}>
                 {events.length > 0
                   ? <Doughnut data={doughnutData} options={doughnutOpts}/>
                   : <div style={{textAlign:'center',padding:60,color:'var(--muted)',fontSize:13}}>No events yet</div>}
@@ -267,11 +267,11 @@ export default function OrgDashboard() {
             </div>
 
             {/* Revenue line chart */}
-            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,gridColumn:'span 2' }}>
+            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,gridColumn: isMobile ? 'auto' : 'span 2' }}>
               <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--mint)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                 <i className="bi bi-graph-up-arrow"/>Revenue — Last 6 Months
               </h3>
-              <div style={{ height:200 }}>
+              <div style={{ height:200, width:'100%', position:'relative' }}>
                 <Line data={lineData} options={{...chartOpts, plugins:{...chartOpts.plugins, legend:{display:false}}}}/>
               </div>
             </div>
@@ -367,7 +367,7 @@ export default function OrgDashboard() {
             </div>
 
             {/* Full bar chart */}
-            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
+            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,minWidth:0,overflow:'hidden' }}>
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20 }}>
                 <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--cyan)',display:'flex',alignItems:'center',gap:8 }}>
                   <i className="bi bi-bar-chart"/>Bookings per Event
@@ -386,19 +386,19 @@ export default function OrgDashboard() {
 
             {/* Line + Doughnut side by side */}
             <div style={{ display:'grid',gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr',gap:20 }}>
-              <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
+              <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,minWidth:0,overflow:'hidden' }}>
                 <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--mint)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                   <i className="bi bi-graph-up"/>Revenue Trend (6 months)
                 </h3>
-                <div style={{ height:220 }}>
+                <div style={{ height:220, width:'100%', position:'relative' }}>
                   <Line data={lineData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/>
                 </div>
               </div>
-              <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24 }}>
+              <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,minWidth:0,overflow:'hidden' }}>
                 <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--purple)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                   <i className="bi bi-pie-chart"/>Categories
                 </h3>
-                <div style={{ height:220 }}>
+                <div style={{ height:220, width:'100%', position:'relative' }}>
                   {events.length>0
                     ? <Doughnut data={doughnutData} options={{...doughnutOpts,plugins:{...doughnutOpts.plugins,legend:{position:'bottom',labels:{...doughnutOpts.plugins.legend.labels,padding:8}}}}}/>
                     : <div style={{textAlign:'center',padding:60,color:'var(--muted)'}}>No data</div>}
