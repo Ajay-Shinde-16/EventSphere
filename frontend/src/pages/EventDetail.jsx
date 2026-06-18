@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents } from '../services/api';
+import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents, emailTicketImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
+import { generateTicketImage } from '../utils/ticketImage';
 
 const CAT = {
   Tech:     { color:'#00F2FE', bg:'#0B1929', emoji:'💻', label:'TECHNOLOGY' },
@@ -398,9 +399,9 @@ Base your reasoning on category similarity, city match, price range, and tag ove
     setBL(true); setBMsg('');
     try {
       const seatMap3 = buildSeatMap(event.tiers);
-      
+
       if (selectedSeats.length === 0) {
-        setBMsg('Please select at least one seat from the grid'); 
+        setBMsg('Please select at least one seat from the grid');
         setBL(false); return;
       }
 
@@ -408,21 +409,50 @@ Base your reasoning on category similarity, city match, price range, and tag ove
       const createdBookings = [];
       for (const seatNum of selectedSeats) {
         const seatInfo = seatMap3[seatNum] || { tier:'General', price: event.tiers?.[0]?.price||0 };
-        const { data } = await createBooking({
-          eventId: id,
-          tier: seatInfo.tier,
-          tierPrice: seatInfo.price,
-          seats: 1,
-          seatNumbers: [seatNum],
-          totalAmount: seatInfo.price,
-        });
-        createdBookings.push(data);
+        try {
+          const { data } = await createBooking({
+            eventId: id,
+            tier: seatInfo.tier,
+            tierPrice: seatInfo.price,
+            seats: 1,
+            seatNumbers: [seatNum],
+            totalAmount: seatInfo.price,
+          });
+          createdBookings.push(data);
+
+          // Generate the real visual ticket (same image as "Download Ticket")
+          // and send it to the backend to email as a real attachment.
+          // Fire-and-forget on the frontend too — never blocks the UI.
+          generateTicketImage(data)
+            .then(imageDataUrl => emailTicketImage(data._id, imageDataUrl))
+            .catch(e => console.log('Ticket image email failed (non-fatal):', e));
+        } catch (seatErr) {
+          // If some seats already booked successfully before this one failed,
+          // still show those as confirmed instead of losing them silently.
+          const reason = seatErr.response?.data?.message || 'Booking failed for this seat';
+          if (createdBookings.length > 0) {
+            setBooking(createdBookings);
+            setBMsg(`Seat ${seatInfo.tier === 'General' ? '' : ''}#${seatNum} couldn't be booked (${reason}). Your other ${createdBookings.length} seat${createdBookings.length>1?'s':''} ${createdBookings.length>1?'are':'is'} confirmed below.`);
+            launchConfetti();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setBL(false);
+            return;
+          }
+          throw seatErr; // no successful bookings yet — bubble up to outer catch
+        }
       }
       setBooking(createdBookings); // array of bookings
       launchConfetti();
       // Auto-scroll to top so the success message is immediately visible
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) { setBMsg(err.response?.data?.message || 'Booking failed'); }
+    } catch (err) {
+      const reason = err.response?.data?.message
+        || (err.code === 'ECONNABORTED' ? 'Request timed out — the server may be waking up, please try again in 30 seconds.' : null)
+        || (!err.response ? 'Cannot reach the server. It may be waking up (free hosting can take up to a minute) — please try again shortly.' : null)
+        || 'Booking failed';
+      setBMsg(reason);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     finally { setBL(false); }
   };
 

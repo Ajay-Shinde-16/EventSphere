@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const API = axios.create({ 
-  baseURL: import.meta.env.VITE_API_URL || 'https://eventsphere-backend-y02n.onrender.com/api'
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'https://eventsphere-backend-y02n.onrender.com/api',
+  timeout: 45000, // 45s — Render free tier can take ~30-50s to wake from a cold start
 });
 
 API.interceptors.request.use((config) => {
@@ -43,6 +44,8 @@ export const getEventRatings = (id) => API.get(`/events/${id}/ratings`);
 
 // Bookings
 export const createBooking = (data) => API.post('/bookings', data);
+export const emailTicketImage = (bookingId, imageDataUrl) =>
+  API.post(`/bookings/${bookingId}/email-ticket-image`, { imageDataUrl });
 export const getMyBookings = () => API.get('/bookings/my');
 export const getEventBookings = (id) => API.get(`/bookings/event/${id}`);
 export const checkIn = (code) => API.put(`/bookings/checkin/${code}`);

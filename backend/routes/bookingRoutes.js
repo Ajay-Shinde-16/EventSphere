@@ -124,6 +124,55 @@ router.put('/checkin/:code', protect, organizerOnly, async (req, res) => {
   }
 });
 
+// Email the real visual ticket image (PNG) as an attachment.
+// The PNG is generated client-side via canvas (see frontend/src/utils/ticketImage.js)
+// right after a successful booking, then POSTed here as a base64 data URI —
+// because canvas rendering only works in the browser, not on the Node server.
+router.post('/:id/email-ticket-image', protect, async (req, res) => {
+  try {
+    const { imageDataUrl } = req.body;
+    if (!imageDataUrl || !imageDataUrl.startsWith('data:image/'))
+      return res.status(400).json({ message: 'Missing or invalid ticket image.' });
+
+    const booking = await Booking.findById(req.params.id)
+      .populate('event', 'title date time venue city category tiers')
+      .populate('user', 'name email');
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (booking.user._id.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: 'Not authorized' });
+
+    const base64Data = imageDataUrl.split(',')[1];
+
+    // Respond immediately — don't make the user wait for the email to send.
+    res.json({ message: 'Ticket image email queued.' });
+
+    // Fire-and-forget send, same pattern as the main booking confirmation email.
+    setImmediate(async () => {
+      try {
+        await sendEmail({
+          to: booking.user.email,
+          subject: `🎫 Your EventSphere Ticket — ${booking.event.title}`,
+          html: `
+            <div style="background:#0B0F19;padding:32px;font-family:Arial,sans-serif;text-align:center;">
+              <h2 style="color:#38BDF8;margin-bottom:8px;">⬡ EventSphere</h2>
+              <p style="color:#94A3B8;margin-bottom:24px;">Your ticket is attached as an image below — save or print it for entry.</p>
+              <p style="color:#E2E8F0;font-size:14px;">Booking Code: <strong style="color:#38BDF8;">${booking.bookingCode}</strong></p>
+            </div>`,
+          attachments: [{
+            filename: `EventSphere-Ticket-${booking.bookingCode}.png`,
+            content: base64Data,
+          }],
+        });
+        console.log(`📧 Ticket image emailed to ${booking.user.email} for booking ${booking.bookingCode}`);
+      } catch (e) {
+        console.log('Ticket image email error (non-fatal):', e.message);
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to queue ticket image email: ' + err.message });
+  }
+});
+
 // Cancel booking
 router.put('/cancel/:id', protect, async (req, res) => {
   try {
