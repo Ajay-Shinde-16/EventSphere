@@ -44,8 +44,8 @@ export const getEventRatings = (id) => API.get(`/events/${id}/ratings`);
 
 // Bookings
 export const createBooking = (data) => API.post('/bookings', data);
-export const emailTicketImage = (bookingId, imageDataUrl) =>
-  API.post(`/bookings/${bookingId}/email-ticket-image`, { imageDataUrl });
+export const emailTicketImage = (bookingId, base64File, format = 'png') =>
+  API.post(`/bookings/${bookingId}/email-ticket-image`, { base64File, format });
 export const getMyBookings = () => API.get('/bookings/my');
 export const getEventBookings = (id) => API.get(`/bookings/event/${id}`);
 export const checkIn = (code) => API.put(`/bookings/checkin/${code}`);

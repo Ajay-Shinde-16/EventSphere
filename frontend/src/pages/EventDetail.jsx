@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents, emailTicketImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
-import { generateTicketImage } from '../utils/ticketImage';
+import { generateTicketPDF } from '../utils/ticketImage';
 
 const CAT = {
   Tech:     { color:'#00F2FE', bg:'#0B1929', emoji:'💻', label:'TECHNOLOGY' },
@@ -420,12 +420,13 @@ Base your reasoning on category similarity, city match, price range, and tag ove
           });
           createdBookings.push(data);
 
-          // Generate the real visual ticket (same image as "Download Ticket")
-          // and send it to the backend to email as a real attachment.
-          // Fire-and-forget on the frontend too — never blocks the UI.
-          generateTicketImage(data)
-            .then(imageDataUrl => emailTicketImage(data._id, imageDataUrl))
-            .catch(e => console.log('Ticket image email failed (non-fatal):', e));
+          // Generate the real visual ticket as a PDF (same design as
+          // "Download Ticket", with a clickable Google Maps link over the
+          // venue line) and send it to the backend to email as a real
+          // attachment. Fire-and-forget — never blocks the UI.
+          generateTicketPDF(data)
+            .then(base64Pdf => emailTicketImage(data._id, base64Pdf, 'pdf'))
+            .catch(e => console.log('Ticket PDF email failed (non-fatal):', e));
         } catch (seatErr) {
           // If some seats already booked successfully before this one failed,
           // still show those as confirmed instead of losing them silently.

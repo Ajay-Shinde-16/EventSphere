@@ -124,15 +124,16 @@ router.put('/checkin/:code', protect, organizerOnly, async (req, res) => {
   }
 });
 
-// Email the real visual ticket image (PNG) as an attachment.
-// The PNG is generated client-side via canvas (see frontend/src/utils/ticketImage.js)
-// right after a successful booking, then POSTed here as a base64 data URI —
-// because canvas rendering only works in the browser, not on the Node server.
+// Email the real visual ticket as a PDF (or PNG fallback) attachment.
+// The file is generated client-side via canvas + jsPDF (see
+// frontend/src/utils/ticketImage.js) right after a successful booking,
+// then POSTed here as base64 — because canvas/PDF rendering only works
+// in the browser, not on the Node server.
 router.post('/:id/email-ticket-image', protect, async (req, res) => {
   try {
-    const { imageDataUrl } = req.body;
-    if (!imageDataUrl || !imageDataUrl.startsWith('data:image/'))
-      return res.status(400).json({ message: 'Missing or invalid ticket image.' });
+    const { base64File, format } = req.body;
+    if (!base64File)
+      return res.status(400).json({ message: 'Missing ticket file.' });
 
     const booking = await Booking.findById(req.params.id)
       .populate('event', 'title date time venue city category tiers')
@@ -141,31 +142,59 @@ router.post('/:id/email-ticket-image', protect, async (req, res) => {
     if (booking.user._id.toString() !== req.user._id.toString())
       return res.status(403).json({ message: 'Not authorized' });
 
-    const base64Data = imageDataUrl.split(',')[1];
+    // Strip any accidental data: prefix, keep raw base64 only
+    const cleanBase64 = base64File.includes(',') ? base64File.split(',')[1] : base64File;
+
+    const isPdf = format === 'pdf';
+    const ext = isPdf ? 'pdf' : 'png';
+    const filename = `EventSphere-Ticket-${booking.bookingCode}.${ext}`;
+
+    const dateStr = new Date(booking.event.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${booking.event.venue} ${booking.event.city}`)}`;
+    const eventUrl = `${process.env.FRONTEND_URL || 'https://eventsphere-wine.vercel.app'}/events/${booking.event._id}`;
 
     // Respond immediately — don't make the user wait for the email to send.
-    res.json({ message: 'Ticket image email queued.' });
+    res.json({ message: 'Ticket file email queued.' });
 
     // Fire-and-forget send, same pattern as the main booking confirmation email.
     setImmediate(async () => {
       try {
         await sendEmail({
           to: booking.user.email,
-          subject: `🎫 Your EventSphere Ticket — ${booking.event.title}`,
+          subject: `🎫 Your Real Ticket — ${booking.event.title} | EventSphere`,
           html: `
-            <div style="background:#0B0F19;padding:32px;font-family:Arial,sans-serif;text-align:center;">
-              <h2 style="color:#38BDF8;margin-bottom:8px;">⬡ EventSphere</h2>
-              <p style="color:#94A3B8;margin-bottom:24px;">Your ticket is attached as an image below — save or print it for entry.</p>
-              <p style="color:#E2E8F0;font-size:14px;">Booking Code: <strong style="color:#38BDF8;">${booking.bookingCode}</strong></p>
+            <div style="background:#0B0F19;padding:32px;font-family:'Segoe UI',Arial,sans-serif;text-align:center;border-radius:16px;max-width:560px;margin:0 auto;">
+              <h2 style="color:#38BDF8;margin-bottom:4px;letter-spacing:2px;">⬡ EVENTSPHERE</h2>
+              <p style="color:#8892A4;font-size:12px;margin-bottom:24px;">Elite Event Management Platform</p>
+
+              <div style="background:#171E2E;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:24px;text-align:left;margin-bottom:20px;">
+                <p style="color:#E2E8F0;font-size:16px;font-weight:700;margin-bottom:12px;">${booking.event.title}</p>
+                <p style="color:#94A3B8;font-size:13px;margin-bottom:6px;">📅 ${dateStr} &nbsp;·&nbsp; ⏰ ${booking.event.time}</p>
+                <p style="color:#94A3B8;font-size:13px;margin-bottom:14px;">
+                  📍 <a href="${mapsUrl}" style="color:#38BDF8;text-decoration:none;">${booking.event.venue}, ${booking.event.city} (open in Google Maps)</a>
+                </p>
+                <p style="color:#94A3B8;font-size:13px;margin-bottom:6px;">🎟️ Tier: <strong style="color:#E2E8F0;">${booking.tier}</strong></p>
+                <p style="color:#94A3B8;font-size:13px;margin-bottom:6px;">🪑 Seats: <strong style="color:#E2E8F0;">${booking.seats}</strong></p>
+                <p style="color:#94A3B8;font-size:13px;">🔖 Booking Code: <strong style="color:#38BDF8;">${booking.bookingCode}</strong></p>
+              </div>
+
+              <p style="color:#E2E8F0;font-size:14px;font-weight:600;margin-bottom:4px;">📎 Your real ticket ${isPdf ? 'PDF' : 'image'} is attached</p>
+              <p style="color:#8892A4;font-size:12px;margin-bottom:20px;">Open the attachment, then tap/click on the venue area inside it for directions, or save/print it for entry.</p>
+
+              <a href="${eventUrl}" style="display:inline-block;padding:10px 24px;border-radius:50px;background:linear-gradient(135deg,#38BDF8,#A78BFA);color:#000;font-size:13px;font-weight:700;text-decoration:none;">
+                View Event Page →
+              </a>
+
+              <p style="color:#4B5563;font-size:11px;margin-top:24px;">PGCP AC, C-DAC Bangalore 2026 · Built by Ajay Shinde</p>
             </div>`,
           attachments: [{
-            filename: `EventSphere-Ticket-${booking.bookingCode}.png`,
-            content: base64Data,
+            filename,
+            content: cleanBase64,
           }],
         });
-        console.log(`📧 Ticket image emailed to ${booking.user.email} for booking ${booking.bookingCode}`);
+        console.log(`📧 Ticket ${ext.toUpperCase()} emailed to ${booking.user.email} for booking ${booking.bookingCode}`);
       } catch (e) {
-        console.log('Ticket image email error (non-fatal):', e.message);
+        console.log('Ticket file email error (non-fatal):', e.message);
       }
     });
   } catch (err) {

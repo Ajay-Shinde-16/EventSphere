@@ -185,6 +185,72 @@ export async function generateTicketImage(bk) {
   return canvas.toDataURL('image/png', 1.0);
 }
 
+/**
+ * Generates a real, single-page PDF of the ticket (same visual design as
+ * generateTicketImage / the "Download Ticket" PNG), with a clickable link
+ * annotation over the venue/location line that opens Google Maps.
+ * Returns a base64 string (no data: prefix) ready to email as an attachment,
+ * or to trigger a direct browser download.
+ */
+export async function generateTicketPDF(bk) {
+  const { jsPDF } = await import('jspdf');
+
+  // Reuse the exact same canvas drawing used for the PNG download/email image
+  const imageDataUrl = await generateTicketImage(bk);
+
+  // Canvas is 1200x480 — convert to a PDF page of matching aspect ratio.
+  // Using mm units, landscape, so it prints nicely on A4/Letter too.
+  const pageW = 280; // mm
+  const pageH = pageW * (480 / 1200); // keep 1200:480 aspect ratio
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [pageW, pageH] });
+
+  pdf.addImage(imageDataUrl, 'PNG', 0, 0, pageW, pageH);
+
+  // Clickable Google Maps link over the venue text on the left panel.
+  // The venue/date/time block sits roughly in the canvas's left 800px-wide
+  // region around y=215-275 (see generateTicketImage) — converted to the
+  // same mm scale used above (scale factor = pageW / 1200).
+  const scale = pageW / 1200;
+  const venueQuery = encodeURIComponent(`${bk.event?.venue || ''} ${bk.event?.city || ''}`);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${venueQuery}`;
+
+  pdf.link(
+    50 * scale,           // x — same x as the 📍 venue line in the canvas
+    260 * scale,          // y — just above the venue text baseline (y=275 in canvas)
+    520 * scale,          // width — generous clickable area across that line
+    30 * scale,           // height
+    { url: mapsUrl }
+  );
+
+  // Also add a clickable link over the whole right-panel QR area, in case
+  // the user wants to tap through to the live event page on mobile PDF viewers.
+  const frontendUrl = window.location.origin;
+  pdf.link(
+    820 * scale, 0, 380 * scale, 480 * scale,
+    { url: `${frontendUrl}/events/${bk.event?._id || ''}` }
+  );
+
+  return pdf.output('datauristring').split(',')[1]; // base64, no prefix
+}
+
+/* Triggers a real browser download of the ticket as a PDF file. */
+export async function downloadTicketPDF(bk) {
+  const { jsPDF } = await import('jspdf');
+  const imageDataUrl = await generateTicketImage(bk);
+
+  const pageW = 280;
+  const pageH = pageW * (480 / 1200);
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [pageW, pageH] });
+  pdf.addImage(imageDataUrl, 'PNG', 0, 0, pageW, pageH);
+
+  const scale = pageW / 1200;
+  const venueQuery = encodeURIComponent(`${bk.event?.venue || ''} ${bk.event?.city || ''}`);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${venueQuery}`;
+  pdf.link(50 * scale, 260 * scale, 520 * scale, 30 * scale, { url: mapsUrl });
+
+  pdf.save(`EventSphere-Ticket-${bk.bookingCode}.pdf`);
+}
+
 /* Triggers a real browser download of the ticket PNG (used by the
    "Download Ticket" button on MyTickets — unchanged behaviour). */
 export async function downloadTicketPNG(bk) {
