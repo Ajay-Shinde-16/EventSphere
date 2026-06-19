@@ -116,7 +116,19 @@ export default function OrgDashboard() {
   // Chart data
   const chartOpts = {
     responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{ labels:{ color:'var(--muted)', font:{ family:"'Space Grotesk',sans-serif", size:11 } } } },
+    plugins:{
+      legend:{ labels:{ color:'var(--muted)', font:{ family:"'Space Grotesk',sans-serif", size:11 } } },
+      tooltip:{
+        backgroundColor:'rgba(15,18,28,0.96)',
+        titleColor:'#fff',
+        bodyColor:'#fff',
+        borderColor:'rgba(255,255,255,0.15)',
+        borderWidth:1,
+        padding:10,
+        titleFont:{ family:"'Space Grotesk',sans-serif", weight:'700' },
+        bodyFont:{ family:"'Space Grotesk',sans-serif" },
+      },
+    },
     scales:{
       x:{ ticks:{ color:'var(--muted)', font:{ size:10 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
       y:{ ticks:{ color:'var(--muted)', font:{ size:10 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
@@ -124,7 +136,19 @@ export default function OrgDashboard() {
   };
   const doughnutOpts = {
     responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{ position:'right', labels:{ color:'var(--muted)', font:{ family:"'Space Grotesk',sans-serif", size:11 }, padding:12 } } }
+    plugins:{
+      legend:{ position:'right', labels:{ color:'var(--muted)', font:{ family:"'Space Grotesk',sans-serif", size:11 }, padding:12 } },
+      tooltip:{
+        backgroundColor:'rgba(15,18,28,0.96)',
+        titleColor:'#fff',
+        bodyColor:'#fff',
+        borderColor:'rgba(255,255,255,0.15)',
+        borderWidth:1,
+        padding:10,
+        titleFont:{ family:"'Space Grotesk',sans-serif", weight:'700' },
+        bodyFont:{ family:"'Space Grotesk',sans-serif" },
+      },
+    }
   };
 
   // Bar chart — bookings per event
@@ -184,7 +208,7 @@ export default function OrgDashboard() {
     <div className="flex fade-up" style={{ minHeight:'calc(100vh - 60px)', width:'100%', maxWidth:'100vw', overflowX:'hidden' }}>
       <Sidebar active="orgdash"/>
 
-      <div style={{ flex:1, padding: isMobile ? '14px 12px' : '24px', minWidth:0, maxWidth:'100%' }}>
+      <div style={{ flex:1, padding: isMobile ? '14px 16px' : '24px', minWidth:0, maxWidth:'100%' }}>
 
         {/* Header */}
         <div className="pgh" style={{ marginBottom:24 }}>
