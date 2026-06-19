@@ -7,11 +7,34 @@ const { protect, organizerOnly } = require('../middleware/authMiddleware');
 // Get all approved events
 router.get('/', async (req, res) => {
   try {
-    const { category, city, search, page = 1, limit = 20 } = req.query;
+    const { category, city, search, page = 1, limit = 20, includePast, dateFrom, dateTo } = req.query;
     const filter = { status: 'approved' };
     if (category && category !== 'all') filter.category = category;
     if (city) filter.city = new RegExp(city, 'i');
-    if (search) filter.$text = { $search: search };
+
+    // Past events are hidden from Browse Events by default — pass
+    // includePast=true explicitly (e.g. an organizer's "past events" tab)
+    // to see them. Comparing by date only (not time) so an event happening
+    // later today still shows.
+    const todayStart = new Date(new Date().toDateString());
+    if (includePast !== 'true') filter.date = { $gte: todayStart };
+
+    // Optional date-range filter (e.g. "events this weekend") — combines
+    // with the past-event exclusion above rather than overriding it.
+    if (dateFrom || dateTo) {
+      filter.date = filter.date || {};
+      if (dateFrom) filter.date.$gte = new Date(dateFrom);
+      if (dateTo) filter.date.$lte = new Date(dateTo);
+    }
+
+    // Search matches title, description, and tags — using regex (not $text)
+    // so it can combine with tags in one $or clause. This means searching
+    // "AI" finds events tagged #AI even if the title doesn't contain "AI".
+    if (search) {
+      const re = new RegExp(search, 'i');
+      filter.$or = [{ title: re }, { description: re }, { tags: re }];
+    }
+
     const events = await Event.find(filter)
       .populate('organizer', 'name email')
       .sort({ isHighlighted: -1, createdAt: -1 })

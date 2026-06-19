@@ -8,7 +8,7 @@ const { protect, organizerOnly } = require('../middleware/authMiddleware');
 const { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail } = require('../utils/sendEmail');
 const QRCode = require('qrcode');
 const { createNotification } = require('./notificationRoutes');
-const { verifyPaymentSignature } = require('./paymentRoutes');
+const { verifyPaymentSignature, getRazorpay } = require('./paymentRoutes');
 
 // Create booking
 router.post('/', protect, async (req, res) => {
@@ -21,6 +21,8 @@ router.post('/', protect, async (req, res) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ message: 'Event not found' });
     if (event.status !== 'approved') return res.status(400).json({ message: 'Event not approved for booking' });
+    if (new Date(event.date) < new Date(new Date().toDateString())) // compare by date only, ignore time-of-day
+      return res.status(400).json({ message: 'This event has already taken place and is no longer accepting bookings.' });
     if (event.bookedSeats + seats > event.totalSeats)
       return res.status(400).json({ message: 'Not enough seats available' });
 
@@ -325,15 +327,42 @@ router.put('/cancel/:id', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     if (booking.status === 'cancelled')
       return res.status(400).json({ message: 'Already cancelled' });
+
+    // Issue a real refund through Razorpay if this booking was actually
+    // paid for. We do this BEFORE marking the booking cancelled — if the
+    // refund call fails, we surface that to the user instead of silently
+    // cancelling their ticket while keeping their money.
+    let refundInfo = null;
+    if (booking.totalAmount > 0 && booking.razorpayPaymentId) {
+      const razorpay = getRazorpay();
+      if (!razorpay) {
+        return res.status(503).json({ message: 'Refund service is not configured. Please contact support to cancel this paid booking.' });
+      }
+      try {
+        const refund = await razorpay.payments.refund(booking.razorpayPaymentId, {
+          amount: Math.round(booking.totalAmount * 100), // paise
+          notes: { reason: 'Booking cancelled by attendee', bookingCode: booking.bookingCode },
+        });
+        refundInfo = { id: refund.id, amount: refund.amount, status: refund.status };
+      } catch (refundErr) {
+        console.error('Refund failed:', JSON.stringify(refundErr, null, 2));
+        const reason = refundErr.error?.description || refundErr.message || 'Unknown refund error';
+        return res.status(502).json({ message: `Refund could not be processed: ${reason}. Your booking has NOT been cancelled — please try again or contact support.` });
+      }
+    }
+
     booking.status = 'cancelled';
     booking.cancelledAt = new Date();
+    if (refundInfo) booking.refundId = refundInfo.id;
     await booking.save();
 
     await createNotification({
       user: req.user._id,
       type: 'cancellation',
       title: 'Booking Cancelled',
-      message: `Your booking (${booking.bookingCode}) has been cancelled.`,
+      message: refundInfo
+        ? `Your booking (${booking.bookingCode}) has been cancelled and ₹${booking.totalAmount.toLocaleString()} has been refunded to your original payment method.`
+        : `Your booking (${booking.bookingCode}) has been cancelled.`,
       icon: 'bi-x-circle-fill',
       color: 'var(--pink)',
       link: '/my-tickets',

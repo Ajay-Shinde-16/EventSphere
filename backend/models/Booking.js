@@ -16,6 +16,7 @@ const bookingSchema = new mongoose.Schema({
   cancelledAt: { type: Date },
   razorpayOrderId: { type: String },
   razorpayPaymentId: { type: String },
+  refundId: { type: String },
 }, { timestamps: true });
 
 bookingSchema.pre('save', function (next) {

@@ -218,8 +218,12 @@ export default function MyTickets() {
   const handleCancel = async (id) => {
     if (!confirm('Cancel this booking?')) return;
     try {
+      const booking = bookings.find(bk => bk._id === id);
       await cancelBooking(id);
       setBookings(b => b.map(bk => bk._id === id ? { ...bk, status:'cancelled' } : bk));
+      if (booking?.totalAmount > 0) {
+        alert(`Booking cancelled. ₹${booking.totalAmount.toLocaleString()} has been refunded to your original payment method.`);
+      }
     } catch (err) { alert(err.response?.data?.message || 'Failed to cancel'); }
   };
 
