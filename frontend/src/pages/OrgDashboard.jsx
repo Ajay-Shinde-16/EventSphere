@@ -209,7 +209,7 @@ export default function OrgDashboard() {
         </div>
 
         {/* Stats */}
-        <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:24 }}>
+        <div style={{ display:'grid',gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:24,maxWidth:'100%' }}>
           {[
             { n:events.length,           l:'Total Events',    color:'var(--cyan)',   icon:'bi-calendar-event' },
             { n:liveEvents,              l:'Live Events',     color:'var(--mint)',   icon:'bi-lightning-charge' },
@@ -347,7 +347,7 @@ export default function OrgDashboard() {
           <div style={{ display:'grid',gap:20 }}>
 
             {/* Top stats cards */}
-            <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:14 }}>
+            <div style={{ display:'grid',gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fit,minmax(200px,1fr))',gap:14,maxWidth:'100%' }}>
               {[
                 { label:'Avg Bookings/Event', val: events.length ? Math.round((events.reduce((s,e)=>s+(e.bookedSeats||0),0)/events.length)) : 0, color:'var(--cyan)', icon:'bi-people' },
                 { label:'Total Revenue',      val:`₹${totalRevenue.toLocaleString()}`, color:'var(--mint)', icon:'bi-currency-rupee' },
