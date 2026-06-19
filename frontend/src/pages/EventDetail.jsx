@@ -534,7 +534,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
       <div style={{ display:'grid', gridTemplateColumns: (isOrg || isMobile) ? '1fr' : '1fr 360px', gap:20 }}>
 
         {/* LEFT */}
-        <div style={{ display:'flex', flexDirection:'column', gap:20, minWidth:0 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:20, minWidth:0, order: isMobile ? 2 : 0 }}>
 
           {/* About */}
           <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
@@ -703,7 +703,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
         </div>
 
         {/* RIGHT — Booking / Organizer Panel */}
-        <div style={{ width:'100%', minWidth:0 }}>
+        <div style={{ width:'100%', minWidth:0, order: isMobile ? 1 : 0 }}>
           {!isOrg ? (
             /* Booking panel */
             <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position: isMobile ? 'static' : 'sticky', top:86, width:'100%' }}>
