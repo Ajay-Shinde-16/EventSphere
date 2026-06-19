@@ -184,7 +184,7 @@ export default function OrgDashboard() {
     <div className="flex fade-up" style={{ minHeight:'calc(100vh - 60px)' }}>
       <Sidebar active="orgdash"/>
 
-      <div style={{ flex:1, padding: isMobile ? '14px 12px' : '24px', minWidth:0 }}>
+      <div style={{ flex:1, padding: isMobile ? '14px 12px' : '24px', minWidth:0, overflow:'hidden' }}>
 
         {/* Header */}
         <div className="pgh" style={{ marginBottom:24 }}>
