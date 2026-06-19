@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// build-marker: restored-working-version-2026-06-19
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents, emailTicketImage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
