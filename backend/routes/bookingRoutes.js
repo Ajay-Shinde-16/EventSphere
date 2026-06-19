@@ -7,11 +7,13 @@ const { Rating, Waitlist } = require('../models/Rating');
 const { protect, organizerOnly } = require('../middleware/authMiddleware');
 const { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail } = require('../utils/sendEmail');
 const QRCode = require('qrcode');
+const { createNotification } = require('./notificationRoutes');
+const { verifyPaymentSignature } = require('./paymentRoutes');
 
 // Create booking
 router.post('/', protect, async (req, res) => {
   try {
-    const { eventId, tier, seats, seatNumbers, tierPrice } = req.body;
+    const { eventId, tier, seats, seatNumbers, tierPrice, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
     if (!eventId || !tier || !seats || seats < 1)
       return res.status(400).json({ message: 'Missing required booking fields.' });
@@ -21,6 +23,27 @@ router.post('/', protect, async (req, res) => {
     if (event.status !== 'approved') return res.status(400).json({ message: 'Event not approved for booking' });
     if (event.bookedSeats + seats > event.totalSeats)
       return res.status(400).json({ message: 'Not enough seats available' });
+
+    const totalAmount = (tierPrice || 0) * seats;
+
+    // Paid bookings (totalAmount > 0) must include a verified Razorpay
+    // payment before the booking is created. This is the actual security
+    // check — without a valid signature, payment_id, and order_id matching
+    // cryptographically, we never mark the booking confirmed, since a
+    // malicious client could otherwise fabricate a "successful payment".
+    if (totalAmount > 0) {
+      if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+        return res.status(402).json({ message: 'Payment required for this booking.' });
+      }
+      const valid = verifyPaymentSignature({
+        orderId: razorpayOrderId,
+        paymentId: razorpayPaymentId,
+        signature: razorpaySignature,
+      });
+      if (!valid) {
+        return res.status(402).json({ message: 'Payment verification failed. Please try again or contact support.' });
+      }
+    }
 
     // Validate selected seat numbers aren't already booked
     if (seatNumbers?.length) {
@@ -32,12 +55,13 @@ router.post('/', protect, async (req, res) => {
       if (existing) return res.status(400).json({ message: 'One or more selected seats are already booked. Please refresh and try again.' });
     }
 
-    const totalAmount = (tierPrice || 0) * seats;
     const booking = new Booking({
       user: req.user._id, event: eventId, tier,
       tierPrice: tierPrice || 0, seats,
       seatNumbers: (seatNumbers || []).map(String),
       totalAmount, status: 'confirmed',
+      ...(razorpayOrderId && { razorpayOrderId }),
+      ...(razorpayPaymentId && { razorpayPaymentId }),
     });
     await booking.save();
 
@@ -68,6 +92,15 @@ router.post('/', protect, async (req, res) => {
       } catch (e) {
         console.log('Email error (non-fatal):', e.message);
       }
+      await createNotification({
+        user: req.user._id,
+        type: 'booking',
+        title: 'Booking Confirmed! 🎉',
+        message: `Your ticket for "${event.title}" is confirmed. Booking code: ${populated.bookingCode}`,
+        icon: 'bi-ticket-perforated-fill',
+        color: 'var(--mint)',
+        link: '/my-tickets',
+      });
     });
   } catch (err) {
     console.error('Booking error:', err.message);
@@ -100,6 +133,74 @@ router.get('/event/:id', protect, organizerOnly, async (req, res) => {
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch event bookings' });
+  }
+});
+
+// Organizer broadcast — email all confirmed attendees of an event at once
+// (e.g. venue change, schedule update, cancellation notice). De-duplicates
+// by email so someone with multiple tickets only gets one copy.
+router.post('/event/:id/broadcast', protect, organizerOnly, async (req, res) => {
+  try {
+    const { subject, message } = req.body;
+    if (!subject?.trim() || !message?.trim())
+      return res.status(400).json({ message: 'Subject and message are required.' });
+
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+    if (event.organizer.toString() !== req.user._id.toString() && req.user.role !== 'admin')
+      return res.status(403).json({ message: 'Not authorized' });
+
+    const bookings = await Booking.find({ event: req.params.id, status: 'confirmed' })
+      .populate('user', 'name email');
+
+    // De-duplicate attendees by email (one booking per seat means one
+    // person could have several Booking documents for the same event)
+    const seen = new Set();
+    const attendees = [];
+    for (const b of bookings) {
+      if (b.user?.email && !seen.has(b.user.email)) {
+        seen.add(b.user.email);
+        attendees.push(b.user);
+      }
+    }
+
+    if (attendees.length === 0)
+      return res.status(400).json({ message: 'No confirmed attendees to message yet.' });
+
+    // Respond immediately — sending to many attendees can take a while.
+    res.json({ message: `Sending to ${attendees.length} attendee${attendees.length>1?'s':''}...`, count: attendees.length });
+
+    setImmediate(async () => {
+      const results = await Promise.allSettled(attendees.map(async (attendee) => {
+        await sendEmail({
+          to: attendee.email,
+          subject: `📢 ${subject} — ${event.title}`,
+          html: `
+            <div style="background:#0B0F19;padding:32px;font-family:'Segoe UI',Arial,sans-serif;text-align:left;border-radius:16px;max-width:560px;margin:0 auto;">
+              <h2 style="color:#38BDF8;margin-bottom:4px;letter-spacing:2px;">⬡ EVENTSPHERE</h2>
+              <p style="color:#8892A4;font-size:12px;margin-bottom:24px;">Message from the organizer of ${event.title}</p>
+              <div style="background:#171E2E;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:20px;margin-bottom:20px;">
+                <p style="color:#E2E8F0;font-size:15px;font-weight:700;margin-bottom:12px;">${subject}</p>
+                <p style="color:#94A3B8;font-size:14px;line-height:1.7;white-space:pre-wrap;">${message}</p>
+              </div>
+              <p style="color:#4B5563;font-size:11px;">You're receiving this because you have a ticket for ${event.title}.</p>
+            </div>`,
+        });
+        await createNotification({
+          user: attendee._id,
+          type: 'organizer_message',
+          title: `📢 ${subject}`,
+          message: message.length > 100 ? message.slice(0, 100) + '...' : message,
+          icon: 'bi-megaphone-fill',
+          color: 'var(--purple)',
+          link: `/events/${event._id}`,
+        });
+      }));
+      const failed = results.filter(r => r.status === 'rejected').length;
+      console.log(`📢 Broadcast for "${event.title}": ${attendees.length - failed}/${attendees.length} delivered`);
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to send broadcast: ' + err.message });
   }
 });
 
@@ -228,6 +329,16 @@ router.put('/cancel/:id', protect, async (req, res) => {
     booking.cancelledAt = new Date();
     await booking.save();
 
+    await createNotification({
+      user: req.user._id,
+      type: 'cancellation',
+      title: 'Booking Cancelled',
+      message: `Your booking (${booking.bookingCode}) has been cancelled.`,
+      icon: 'bi-x-circle-fill',
+      color: 'var(--pink)',
+      link: '/my-tickets',
+    });
+
     // Restore seat count
     const event = await Event.findById(booking.event);
     if (event) {
@@ -252,6 +363,15 @@ router.put('/cancel/:id', protect, async (req, res) => {
                 await sendEmail(emailOpts);
                 w.notified = true;
                 await w.save();
+                await createNotification({
+                  user: w.user._id,
+                  type: 'waitlist',
+                  title: 'A Seat Opened Up! 🎟️',
+                  message: `A seat just became available for "${event.title}" — book now before it's gone!`,
+                  icon: 'bi-stars',
+                  color: 'var(--amber)',
+                  link: `/events/${event._id}`,
+                });
                 console.log(`📧 Waitlist notification sent to ${w.user.email} for "${event.title}"`);
               } catch (e) {
                 console.log(`📧 Waitlist email failed for ${w.user?.email}: ${e.message}`);

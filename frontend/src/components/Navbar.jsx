@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../services/api';
 
 export default function Navbar() {
   const { user, logout, toggleDarkMode, darkMode } = useAuth();
@@ -11,6 +12,8 @@ export default function Navbar() {
   const [scrolled,  setScrolled]  = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen,  setMenuOpen]  = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount]      = useState(0);
   const notifRef = useRef(null);
   const tapCount = useRef(0);
   const tapTimer = useRef(null);
@@ -49,6 +52,48 @@ export default function Navbar() {
 
   // Close mobile menu on route change
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+
+  // Fetch real notifications on login, then refresh every 60s so a new
+  // booking/cancellation/waitlist-promotion shows up without a manual reload.
+  useEffect(() => {
+    if (!user) { setNotifications([]); setUnreadCount(0); return; }
+    const fetchNotifs = async () => {
+      try {
+        const { data } = await getNotifications();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      } catch {}
+    };
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 60000);
+    return () => clearInterval(interval);
+  }, [user?._id]);
+
+  const handleNotifClick = async (n) => {
+    if (!n.read) {
+      try { await markNotificationRead(n._id); } catch {}
+      setNotifications(ns => ns.map(x => x._id === n._id ? { ...x, read: true } : x));
+      setUnreadCount(c => Math.max(0, c - 1));
+    }
+    setNotifOpen(false);
+    if (n.link) navigate(n.link);
+  };
+
+  const handleMarkAllRead = async () => {
+    try { await markAllNotificationsRead(); } catch {}
+    setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+  };
+
+  const timeAgo = (date) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
 
   const isActive = (path) =>
     path === '/'
@@ -139,7 +184,7 @@ export default function Navbar() {
                 </div>
                 {!isMobile && (
                   <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>Smart Ticketing</div>
-                )}
+                )}\
               </div>
             )}
           </div>
@@ -188,11 +233,13 @@ export default function Navbar() {
             <div ref={notifRef} style={{ position: 'relative' }}>
               <button style={iconBtn} onClick={() => setNotifOpen(v => !v)}>
                 <i className="bi bi-bell-fill" />
-                <span style={{
-                  position: 'absolute', top: 7, right: 7,
-                  width: 7, height: 7, borderRadius: '50%',
-                  background: 'var(--amber)',
-                }} className="pulse-dot" />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 7, right: 7,
+                    width: 7, height: 7, borderRadius: '50%',
+                    background: 'var(--amber)',
+                  }} className="pulse-dot" />
+                )}
               </button>
 
               {notifOpen && (
@@ -204,7 +251,9 @@ export default function Navbar() {
                     right: isMobile ? -60 : 0,
                     left: isMobile ? 'auto' : 'auto',
                     top: 44,
-                    width: isMobile ? Math.min(280, width - 24) : 290,
+                    width: isMobile ? Math.min(280, width - 24) : 320,
+                    maxHeight: 420,
+                    overflowY: 'auto',
                     borderRadius: 16,
                     overflow: 'hidden',
                     zIndex: 200,
@@ -216,31 +265,44 @@ export default function Navbar() {
                   <div style={{
                     padding: '12px 16px', borderBottom: '1px solid var(--border)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1,
                   }}>
                     <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 13, color: 'var(--cyan)' }}>
-                      Notifications
+                      Notifications {unreadCount > 0 && `(${unreadCount})`}
                     </span>
-                    <button
-                      onClick={() => setNotifOpen(false)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, padding: '2px 6px' }}
-                    >✕</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllRead}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mint)', fontSize: 11, fontWeight: 700, padding: 0 }}>
+                          Mark all read
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setNotifOpen(false)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, padding: '2px 6px' }}
+                      >✕</button>
+                    </div>
                   </div>
-                  {[
-                    { icon: 'bi-check-circle-fill', color: 'var(--mint)',  title: 'Welcome to EventSphere!', msg: 'Explore amazing events.', time: 'Now' },
-                    { icon: 'bi-qr-code',           color: 'var(--cyan)',  title: 'QR Tickets Ready',        msg: 'Instant & scannable.',   time: '1h'  },
-                  ].map((n, i) => (
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
+                      <i className="bi bi-bell-slash" style={{ fontSize: 24, display: 'block', marginBottom: 8, opacity: 0.5 }}/>
+                      No notifications yet
+                    </div>
+                  ) : notifications.map((n) => (
                     <div
-                      key={i}
-                      style={{ padding: '11px 16px', display: 'flex', gap: 10, borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
+                      key={n._id}
+                      onClick={() => handleNotifClick(n)}
+                      style={{ padding: '11px 16px', display: 'flex', gap: 10, borderBottom: '1px solid var(--border)', cursor: 'pointer', background: n.read ? 'transparent' : 'rgba(56,189,248,0.04)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
-                      onMouseLeave={e => e.currentTarget.style.background = ''}
+                      onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(56,189,248,0.04)'}
                     >
-                      <i className={`bi ${n.icon}`} style={{ color: n.color, fontSize: 17, marginTop: 2, flexShrink: 0 }} />
-                      <div>
+                      <i className={`bi ${n.icon || 'bi-bell'}`} style={{ color: n.color || 'var(--cyan)', fontSize: 17, marginTop: 2, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--text)' }}>{n.title}</div>
-                        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{n.msg}</div>
-                        <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{n.time} ago</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, lineHeight: 1.4 }}>{n.message}</div>
+                        <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{timeAgo(n.createdAt)}</div>
                       </div>
+                      {!n.read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', flexShrink: 0, marginTop: 6 }}/>}
                     </div>
                   ))}
                 </div>

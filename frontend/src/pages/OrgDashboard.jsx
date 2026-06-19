@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
-import { getMyEvents, getEventBookings, deleteEvent } from '../services/api';
+import { getMyEvents, getEventBookings, deleteEvent, broadcastToAttendees } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   Chart as ChartJS,
@@ -73,11 +73,82 @@ function Sidebar({ active }) {
 /* ══════════════════════════════════════════════════════════════
    MAIN
 ══════════════════════════════════════════════════════════════ */
+/* ── Broadcast Message Modal ───────────────────────────────────
+   Lets an organizer send one email + in-app notification to every
+   confirmed attendee of a specific event (venue change, schedule
+   update, cancellation notice, etc.) ──────────────────────────── */
+function BroadcastModal({ event, onClose }) {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null); // { count } | { error }
+
+  const handleSend = async () => {
+    if (!subject.trim() || !message.trim()) return;
+    setSending(true); setResult(null);
+    try {
+      const { data } = await broadcastToAttendees(event._id, { subject, message });
+      setResult({ count: data.count });
+    } catch (err) {
+      setResult({ error: err.response?.data?.message || 'Failed to send message.' });
+    } finally { setSending(false); }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:'100%', maxWidth:480, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, overflow:'hidden' }}>
+        <div style={{ height:4, background:'linear-gradient(90deg,var(--amber),var(--purple))' }}/>
+        <div style={{ padding:24 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+            <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.05rem', color:'var(--heading)', display:'flex', alignItems:'center', gap:8 }}>
+              <i className="bi bi-megaphone-fill" style={{ color:'var(--amber)' }}/>Message Attendees
+            </h3>
+            <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--muted)', fontSize:18 }}>✕</button>
+          </div>
+          <p style={{ fontSize:12, color:'var(--muted)', marginBottom:18 }}>Emails everyone with a confirmed ticket for <strong style={{ color:'var(--text)' }}>{event.title}</strong></p>
+
+          {result?.count !== undefined ? (
+            <div style={{ textAlign:'center', padding:'24px 0' }}>
+              <i className="bi bi-check-circle-fill" style={{ fontSize:36, color:'var(--mint)', display:'block', marginBottom:10 }}/>
+              <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, color:'var(--mint)', marginBottom:4 }}>Message sent!</div>
+              <p style={{ fontSize:12, color:'var(--muted)' }}>Delivering to {result.count} attendee{result.count>1?'s':''} in the background.</p>
+              <button onClick={onClose} style={{ marginTop:16, padding:'9px 22px', borderRadius:10, fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:12, background:'var(--surface2)', border:'1px solid var(--border)', color:'var(--text)', cursor:'pointer' }}>Close</button>
+            </div>
+          ) : (
+            <>
+              {result?.error && (
+                <div style={{ marginBottom:14, padding:'10px 14px', borderRadius:10, background:'rgba(244,114,182,0.08)', border:'1px solid rgba(244,114,182,0.25)', color:'var(--pink)', fontSize:12 }}>
+                  <i className="bi bi-exclamation-circle-fill me-2"/>{result.error}
+                </div>
+              )}
+              <div style={{ marginBottom:14 }}>
+                <label className="fl">Subject</label>
+                <input className="fi" placeholder="e.g. Venue Change Notice" value={subject} onChange={e=>setSubject(e.target.value)} maxLength={100}/>
+              </div>
+              <div style={{ marginBottom:18 }}>
+                <label className="fl">Message</label>
+                <textarea className="fta" placeholder="Write your update here — e.g. 'Due to weather, the venue has changed to...'" value={message} onChange={e=>setMessage(e.target.value)} style={{ minHeight:120 }} maxLength={2000}/>
+              </div>
+              <button onClick={handleSend} disabled={sending || !subject.trim() || !message.trim()}
+                style={{ width:'100%', padding:'12px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:13, background: sending||!subject.trim()||!message.trim() ? 'var(--surface2)' : 'linear-gradient(135deg,var(--amber),var(--purple))', color: sending||!subject.trim()||!message.trim() ? 'var(--muted)' : '#000', border:'none', cursor: sending||!subject.trim()||!message.trim() ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                {sending
+                  ? <><div style={{ width:14,height:14,border:'2px solid rgba(0,0,0,0.3)',borderTopColor:'#000',borderRadius:'50%',animation:'spin 0.7s linear infinite' }}/>Sending...</>
+                  : <><i className="bi bi-send-fill"/>Send to All Attendees</>}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OrgDashboard() {
   const [events, setEvents]       = useState([]);
   const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [msgModalEvent, setMsgModalEvent] = useState(null); // event being messaged, or null
   const { user } = useAuth();
   const navigate  = useNavigate();
   const { isMobile } = useResponsive();
@@ -218,6 +289,7 @@ export default function OrgDashboard() {
 
   return (
     <div className="flex fade-up" style={{ minHeight:'calc(100vh - 60px)', width:'100%', maxWidth:'100vw', overflowX:'hidden' }}>
+      {msgModalEvent && <BroadcastModal event={msgModalEvent} onClose={() => setMsgModalEvent(null)} />}
       <Sidebar active="orgdash"/>
 
       <div style={{ flex:1, padding: isMobile ? '14px 16px' : '24px', minWidth:0, maxWidth:'100%' }}>
@@ -362,6 +434,10 @@ export default function OrgDashboard() {
                             <div style={{ display:'flex',gap:6 }}>
                               <button onClick={()=>navigate(`/events/${ev._id}`)}
                                 style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--border)',cursor:'pointer' }}>View</button>
+                              <button onClick={()=>navigate(`/edit-event/${ev._id}`)}
+                                style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(155,81,224,0.08)',color:'var(--purple)',border:'1px solid rgba(155,81,224,0.2)',cursor:'pointer' }}>Edit</button>
+                              <button onClick={()=>setMsgModalEvent(ev)}
+                                style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(251,191,36,0.08)',color:'var(--amber)',border:'1px solid rgba(251,191,36,0.2)',cursor:'pointer' }}>Message</button>
                               <button onClick={()=>navigate('/scan-qr')}
                                 style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(0,242,254,0.08)',color:'var(--cyan)',border:'1px solid rgba(0,242,254,0.2)',cursor:'pointer' }}>Scan</button>
                               <button onClick={()=>handleDelete(ev._id)}

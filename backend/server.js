@@ -17,6 +17,8 @@ app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/ratings', require('./routes/ratingRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'EventSphere API Running', time: new Date() }));

@@ -14,6 +14,8 @@ const bookingSchema = new mongoose.Schema({
   qrData: { type: String },
   status: { type: String, enum: ['confirmed', 'cancelled', 'pending'], default: 'confirmed' },
   cancelledAt: { type: Date },
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
 }, { timestamps: true });
 
 bookingSchema.pre('save', function (next) {

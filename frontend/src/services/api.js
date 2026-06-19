@@ -48,6 +48,7 @@ export const emailTicketImage = (bookingId, base64File, format = 'png') =>
   API.post(`/bookings/${bookingId}/email-ticket-image`, { base64File, format });
 export const getMyBookings = () => API.get('/bookings/my');
 export const getEventBookings = (id) => API.get(`/bookings/event/${id}`);
+export const broadcastToAttendees = (eventId, data) => API.post(`/bookings/event/${eventId}/broadcast`, data);
 export const checkIn = (code, eventId) => API.put(`/bookings/checkin/${code}`, { eventId });
 export const cancelBooking = (id) => API.put(`/bookings/cancel/${id}`);
 
@@ -58,5 +59,13 @@ export const updateEventStatus = (id, status) => API.put(`/admin/events/${id}/st
 export const getAdminUsers = () => API.get('/admin/users');
 export const toggleUserStatus = (id) => API.put(`/admin/users/${id}/status`);
 export const getAdminBookings = () => API.get('/admin/bookings');
+
+// Notifications
+export const getNotifications = () => API.get('/notifications');
+export const markNotificationRead = (id) => API.put(`/notifications/${id}/read`);
+export const markAllNotificationsRead = () => API.put('/notifications/read-all');
+
+// Payments
+export const createPaymentOrder = (data) => API.post('/payments/create-order', data);
 
 export default API;

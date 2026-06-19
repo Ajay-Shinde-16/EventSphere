@@ -8,6 +8,7 @@ import EventDetail from './pages/EventDetail';
 import MyTickets from './pages/MyTickets';
 import OrgDashboard from './pages/OrgDashboard';
 import CreateEvent from './pages/CreateEvent';
+import EditEvent from './pages/EditEvent';
 import ScanQR from './pages/ScanQR';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
@@ -64,6 +65,7 @@ function AppShell() {
         <Route path="/my-tickets"            element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
         <Route path="/org-dashboard"         element={<OrganizerRoute><OrgDashboard /></OrganizerRoute>} />
         <Route path="/create-event"          element={<OrganizerRoute><CreateEvent /></OrganizerRoute>} />
+        <Route path="/edit-event/:id"        element={<OrganizerRoute><EditEvent /></OrganizerRoute>} />
         <Route path="/scan-qr"               element={<OrganizerRoute><ScanQR /></OrganizerRoute>} />
         <Route path="/admin"                 element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/profile"               element={<ProtectedRoute><Profile /></ProtectedRoute>} />

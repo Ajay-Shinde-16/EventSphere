@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 // build-marker: restored-working-version-2026-06-19
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents, emailTicketImage } from '../services/api';
+import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents, emailTicketImage, createPaymentOrder } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { generateTicketPDF } from '../utils/ticketImage';
@@ -334,6 +334,46 @@ Base your reasoning on category similarity, city match, price range, and tag ove
     return selectedSeats.reduce((sum, s) => sum + (seatMap[s]?.price||0), 0);
   };
 
+  // Opens Razorpay's checkout modal for the given amount (in rupees).
+  // Resolves with { orderId, paymentId, signature } on success, or
+  // rejects with an Error if the user cancels or payment fails.
+  const payWithRazorpay = (amountRupees) => {
+    return new Promise(async (resolve, reject) => {
+      if (typeof window.Razorpay === 'undefined') {
+        reject(new Error('Payment gateway failed to load. Please refresh and try again.'));
+        return;
+      }
+      try {
+        const { data: order } = await createPaymentOrder({ amount: amountRupees, eventId: id });
+        const options = {
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency,
+          order_id: order.orderId,
+          name: 'EventSphere',
+          description: event?.title || 'Ticket Booking',
+          prefill: { name: user?.name || '', email: user?.email || '' },
+          theme: { color: '#00F2FE' },
+          handler: (response) => {
+            resolve({
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            });
+          },
+          modal: {
+            ondismiss: () => reject(new Error('Payment was cancelled.')),
+          },
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', () => reject(new Error('Payment failed. Please try again.')));
+        rzp.open();
+      } catch (err) {
+        reject(new Error(err.response?.data?.message || 'Could not start payment. Please try again.'));
+      }
+    });
+  };
+
   const handleBook = async () => {
     if (!user) { navigate('/login'); return; }
     setBL(true); setBMsg('');
@@ -343,6 +383,22 @@ Base your reasoning on category similarity, city match, price range, and tag ove
       if (selectedSeats.length === 0) {
         setBMsg('Please select at least one seat from the grid');
         setBL(false); return;
+      }
+
+      const grandTotal = getSelectedTotal();
+
+      // For paid bookings, run ONE Razorpay payment for the full total
+      // (not one popup per seat) — then use that single verified payment
+      // to create every seat's booking below.
+      let paymentInfo = null;
+      if (grandTotal > 0) {
+        try {
+          paymentInfo = await payWithRazorpay(grandTotal);
+        } catch (payErr) {
+          setBMsg(payErr.message || 'Payment was cancelled or failed.');
+          setBL(false);
+          return;
+        }
       }
 
       // Create one booking per seat
@@ -357,6 +413,11 @@ Base your reasoning on category similarity, city match, price range, and tag ove
             seats: 1,
             seatNumbers: [seatNum],
             totalAmount: seatInfo.price,
+            ...(paymentInfo && {
+              razorpayOrderId: paymentInfo.orderId,
+              razorpayPaymentId: paymentInfo.paymentId,
+              razorpaySignature: paymentInfo.signature,
+            }),
           });
           createdBookings.push(data);
 
@@ -808,8 +869,8 @@ Base your reasoning on category similarity, city match, price range, and tag ove
                   <button onClick={handleBook} disabled={bookingLoading}
                     style={{ width:'100%', padding:'13px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:13, color:'#000', border:'none', cursor:'pointer', opacity:bookingLoading?0.7:1, background:`linear-gradient(135deg,${cat.color},#9B51E0)`, boxShadow:`0 4px 20px ${cat.color}25` }}>
                     {bookingLoading
-                      ? <><i className="bi bi-arrow-repeat me-2" style={{animation:'spin 0.7s linear infinite',display:'inline-block'}}/>Booking...</>
-                      : <><i className="bi bi-lightning-charge me-2"/>Book Now{selectedSeats.length > 0 ? ` — ${selectedSeats.length} seat${selectedSeats.length>1?'s':''} selected` : ''}</>}
+                      ? <><i className="bi bi-arrow-repeat me-2" style={{animation:'spin 0.7s linear infinite',display:'inline-block'}}/>{getSelectedTotal() > 0 ? 'Processing payment...' : 'Booking...'}</>
+                      : <><i className={`bi ${getSelectedTotal() > 0 ? 'bi-credit-card' : 'bi-lightning-charge'} me-2`}/>{getSelectedTotal() > 0 ? `Pay ₹${getSelectedTotal().toLocaleString()} & Book` : 'Book Now'}{selectedSeats.length > 0 ? ` — ${selectedSeats.length} seat${selectedSeats.length>1?'s':''}` : ''}</>}
                   </button>
                 )}
 
