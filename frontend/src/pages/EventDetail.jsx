@@ -343,6 +343,14 @@ Base your reasoning on category similarity, city match, price range, and tag ove
         reject(new Error('Payment gateway failed to load. Please refresh and try again.'));
         return;
       }
+      // Razorpay's widget can internally retry after a failed attempt
+      // (e.g. OTP hiccup) within the SAME modal session — so 'payment.failed'
+      // can fire even when the user goes on to complete payment successfully
+      // right after. A Promise can only settle once, so we must not let an
+      // earlier failure event reject a promise that a later genuine success
+      // would otherwise resolve. This flag ensures only the FIRST settlement
+      // wins, and specifically prefers success if it ever arrives.
+      let settled = false;
       try {
         const { data: order } = await createPaymentOrder({ amount: amountRupees, eventId: id });
         const options = {
@@ -355,6 +363,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
           prefill: { name: user?.name || '', email: user?.email || '' },
           theme: { color: '#00F2FE' },
           handler: (response) => {
+            settled = true;
             resolve({
               orderId: response.razorpay_order_id,
               paymentId: response.razorpay_payment_id,
@@ -362,14 +371,27 @@ Base your reasoning on category similarity, city match, price range, and tag ove
             });
           },
           modal: {
-            ondismiss: () => reject(new Error('Payment was cancelled.')),
+            ondismiss: () => {
+              // Only treat closing the modal as a real cancellation if we
+              // haven't already succeeded — the modal closes automatically
+              // right after a successful payment too, which would otherwise
+              // incorrectly fire this as a "cancellation".
+              if (!settled) { settled = true; reject(new Error('Payment was cancelled.')); }
+            },
           },
         };
         const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', () => reject(new Error('Payment failed. Please try again.')));
+        rzp.on('payment.failed', () => {
+          // Don't reject if we've already resolved/rejected, and don't
+          // reject immediately even on first failure — Razorpay's widget
+          // keeps the modal open for the user to retry with a different
+          // method, so only treat it as final once the modal actually closes
+          // without a subsequent success (handled by ondismiss above).
+          if (settled) return;
+        });
         rzp.open();
       } catch (err) {
-        reject(new Error(err.response?.data?.message || 'Could not start payment. Please try again.'));
+        if (!settled) { settled = true; reject(new Error(err.response?.data?.message || 'Could not start payment. Please try again.')); }
       }
     });
   };
