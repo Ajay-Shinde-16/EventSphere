@@ -114,10 +114,22 @@ export default function OrgDashboard() {
   const pendingEvents = events.filter(e=>e.status==='pending').length;
 
   // Chart data
+  // Chart.js draws on a <canvas>, which cannot resolve CSS var() references
+  // the way DOM elements can — passing 'var(--muted)' directly causes it to
+  // silently fall back to black text. This reads the actual computed value
+  // of each CSS variable so chart text always matches the current theme.
+  const cssVar = (name, fallback) => {
+    if (typeof window === 'undefined') return fallback;
+    const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return val || fallback;
+  };
+  const mutedColor = cssVar('--muted', '#94A3B8');
+  const gridColor  = 'rgba(148,163,184,0.12)';
+
   const chartOpts = {
     responsive:true, maintainAspectRatio:false,
     plugins:{
-      legend:{ labels:{ color:'var(--muted)', font:{ family:"'Space Grotesk',sans-serif", size:11 } } },
+      legend:{ labels:{ color:mutedColor, font:{ family:"'Space Grotesk',sans-serif", size:11 } } },
       tooltip:{
         backgroundColor:'rgba(15,18,28,0.96)',
         titleColor:'#fff',
@@ -130,14 +142,14 @@ export default function OrgDashboard() {
       },
     },
     scales:{
-      x:{ ticks:{ color:'var(--muted)', font:{ size:10 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
-      y:{ ticks:{ color:'var(--muted)', font:{ size:10 } }, grid:{ color:'rgba(255,255,255,0.04)' } },
+      x:{ ticks:{ color:mutedColor, font:{ size:10 } }, grid:{ color:gridColor } },
+      y:{ ticks:{ color:mutedColor, font:{ size:10 } }, grid:{ color:gridColor } },
     }
   };
   const doughnutOpts = {
     responsive:true, maintainAspectRatio:false,
     plugins:{
-      legend:{ position:'right', labels:{ color:'var(--muted)', font:{ family:"'Space Grotesk',sans-serif", size:11 }, padding:12 } },
+      legend:{ position:'right', labels:{ color:mutedColor, font:{ family:"'Space Grotesk',sans-serif", size:11 }, padding:12 } },
       tooltip:{
         backgroundColor:'rgba(15,18,28,0.96)',
         titleColor:'#fff',
