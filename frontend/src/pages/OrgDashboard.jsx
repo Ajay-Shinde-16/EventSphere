@@ -291,7 +291,7 @@ export default function OrgDashboard() {
             </div>
 
             {/* Revenue line chart */}
-            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,gridColumn: isMobile ? 'auto' : 'span 2' }}>
+            <div style={{ background:'var(--card-bg)',border:'1px solid var(--border)',borderRadius:20,padding:24,gridColumn: isMobile ? 'auto' : 'span 2',minWidth:0,overflow:'hidden' }}>
               <h3 style={{ fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:'0.95rem',color:'var(--mint)',marginBottom:16,display:'flex',alignItems:'center',gap:8 }}>
                 <i className="bi bi-graph-up-arrow"/>Revenue — Last 6 Months
               </h3>
@@ -401,7 +401,7 @@ export default function OrgDashboard() {
                   <i className="bi bi-download"/>Export CSV
                 </button>
               </div>
-              <div style={{ height:280 }}>
+              <div style={{ height:280, width:'100%', position:'relative' }}>
                 {events.length>0
                   ? <Bar data={barData} options={{...chartOpts,plugins:{...chartOpts.plugins,legend:{display:false}}}}/>
                   : <div style={{textAlign:'center',padding:80,color:'var(--muted)'}}>No data yet</div>}
