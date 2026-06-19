@@ -534,7 +534,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
       <div style={{ display:'grid', gridTemplateColumns: (isOrg || isMobile) ? '1fr' : '1fr 360px', gap:20 }}>
 
         {/* LEFT */}
-        <div style={{ display:'flex', flexDirection:'column', gap:20, minWidth:0 }}>
+        <div style={{ display: isMobile ? 'contents' : 'flex', flexDirection:'column', gap:20, minWidth:0 }}>
 
           {/* About */}
           <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
@@ -597,7 +597,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
 
           {/* Rate this event — attendees only, not organizers/admins */}
           {!isOrg && (
-          <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
+          <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24, order: isMobile ? 2 : 'unset' }}>
             <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1rem', color:'var(--amber)', marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
               <i className="bi bi-star-fill"/>Rate This Event
             </h2>
@@ -624,7 +624,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
           )}
 
           {/* ── AI SMART RECOMMENDATIONS ── */}
-          <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24 }}>
+          <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, padding:24, order: isMobile ? 3 : 'unset' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
               <h2 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:'1rem', color:'var(--purple)', display:'flex', alignItems:'center', gap:8 }}>
                 <div style={{ width:28, height:28, borderRadius:8, background:'linear-gradient(135deg,#9B51E0,#00F2FE)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -703,7 +703,7 @@ Base your reasoning on category similarity, city match, price range, and tag ove
         </div>
 
         {/* RIGHT — Booking / Organizer Panel */}
-        <div style={{ width:'100%', minWidth:0 }}>
+        <div style={{ width:'100%', minWidth:0, order: isMobile ? 1 : 'unset' }}>
           {!isOrg ? (
             /* Booking panel */
             <div style={{ background:'var(--card-bg)', border:`1px solid ${cat.color}30`, borderRadius:20, overflow:'hidden', position: isMobile ? 'static' : 'sticky', top:86, width:'100%' }}>
