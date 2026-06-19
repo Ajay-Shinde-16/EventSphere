@@ -41,7 +41,7 @@ router.post('/create-order', protect, async (req, res) => {
     const order = await razorpay.orders.create({
       amount: Math.round(amount * 100), // Razorpay expects paise (smallest unit)
       currency: 'INR',
-      receipt: `evt_${eventId}_${Date.now()}`,
+      receipt: `evt_${Date.now()}`.slice(0, 40), // Razorpay caps receipt at 40 chars
       notes: { eventId, eventTitle: event.title, userId: req.user._id.toString() },
     });
 
@@ -52,7 +52,13 @@ router.post('/create-order', protect, async (req, res) => {
       keyId: process.env.RAZORPAY_KEY_ID, // safe to send to frontend, it's public
     });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to create payment order: ' + err.message });
+    // Razorpay's SDK often throws an object shaped like
+    // { statusCode, error: { code, description } } rather than a plain
+    // Error — err.message alone can be undefined, so check both shapes
+    // and log the full object server-side for real debugging.
+    console.error('Razorpay create-order error (full):', JSON.stringify(err, null, 2));
+    const reason = err.error?.description || err.message || 'Unknown error — check Render logs for details.';
+    res.status(500).json({ message: 'Failed to create payment order: ' + reason });
   }
 });
 
