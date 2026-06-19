@@ -139,7 +139,7 @@ export default function Navbar() {
                 </div>
                 {!isMobile && (
                   <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>Smart Ticketing</div>
-                )}\
+                )}
               </div>
             )}
           </div>
