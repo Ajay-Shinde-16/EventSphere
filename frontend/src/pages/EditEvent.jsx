@@ -171,7 +171,7 @@ export default function EditEvent() {
 
             <div style={{ marginBottom:14 }}>
               <label className="fl">Event Banner Image (optional)</label>
-              <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+              <div style={{ display:'flex', gap:12, alignItems:'center', flexWrap:'wrap' }}>
                 {form.image ? (
                   <div style={{ position:'relative', width:140, height:70, borderRadius:10, overflow:'hidden', flexShrink:0 }}>
                     <img src={form.image} alt="Banner preview" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>

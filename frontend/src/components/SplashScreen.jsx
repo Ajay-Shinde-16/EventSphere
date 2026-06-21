@@ -128,25 +128,25 @@ export default function SplashScreen({ onDone }) {
           }
         }
 
-        el.style.transition = 'transform 0.55s cubic-bezier(0.2,0.9,0.3,1.4), opacity 0.3s ease, filter 0.3s ease';
+        el.style.transition = 'transform 0.85s cubic-bezier(0.2,0.9,0.3,1.4), opacity 0.4s ease, filter 0.4s ease';
         el.style.opacity = '1';
         el.style.transform = OVERSHOOT[i];
         el.style.filter = 'drop-shadow(0 0 8px rgba(255,255,255,0.5))';
         T(() => {
-          el.style.transition = 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease';
+          el.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease';
           el.style.transform = 'translate(0,0) rotate(0deg) scale(1)';
           el.style.filter = 'none';
-        }, 300);
-      }, 80 + i * 100);
+        }, 460);
+      }, 120 + i * 160);
     });
 
-    const hexDone = 80 + HEX_PIECES.length * 100 + 350;
+    const hexDone = 120 + HEX_PIECES.length * 160 + 550;
 
     // PHASE 2 — continuous spin begins and never stops for the rest
     // of the sequence (runs right through the message and confetti).
     T(() => {
       if (hexSpinGroupRef.current) {
-        hexSpinGroupRef.current.style.animation = 'splash-spin 6s linear infinite';
+        hexSpinGroupRef.current.style.animation = 'splash-spin 16s linear infinite';
       }
     }, hexDone);
 
