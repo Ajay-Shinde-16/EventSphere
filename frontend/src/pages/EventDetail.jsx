@@ -322,6 +322,8 @@ Base your reasoning on category similarity, city match, price range, and tag ove
     setAiRecsLoading(false);
   };
 
+  const MAX_SEATS_PER_BOOKING = 10;
+
   const toggleSeat = (num) => {
     setSelectedSeats(prev => {
       if (prev.includes(num)) {
@@ -329,6 +331,13 @@ Base your reasoning on category similarity, city match, price range, and tag ove
         const next = prev.filter(s => s !== num);
         setSeats(Math.max(1, next.length));
         return next;
+      }
+      // Prevent selecting more than the max — matches the server-side
+      // limit exactly, so the UI never lets someone select something
+      // that would just fail when they click Book.
+      if (prev.length >= MAX_SEATS_PER_BOOKING) {
+        setBMsg(`You can select up to ${MAX_SEATS_PER_BOOKING} seats per booking.`);
+        return prev;
       }
       // Select — auto-increment count
       const next = [...prev, num];
@@ -571,6 +580,14 @@ Base your reasoning on category similarity, city match, price range, and tag ove
       <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:20, overflow:'hidden', marginBottom:20 }}>
         {/* Top color bar */}
         <div style={{ height:5, background:`linear-gradient(90deg,${cat.color},#9B51E0,#05FF9B)` }} />
+
+        {/* Uploaded banner image — falls back to no image (category gradient
+            shown elsewhere) if the organizer didn't upload one */}
+        {event.image && (
+          <div style={{ width:'100%', height: isMobile ? 180 : 280, overflow:'hidden' }}>
+            <img src={event.image} alt={event.title} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
+          </div>
+        )}
 
         <div style={{ padding:'28px 32px' }}>
           {/* Badges row */}

@@ -209,13 +209,15 @@ function WebcamScanner({ onScan, onClose }) {
       if (code?.data) {
         setStatus('QR detected! Checking in...');
         stopCamera();
-        // Parse booking code from QR data
+        // Parse booking code (and signature, if present) from QR data
         let bookingCode = code.data;
+        let signature = null;
         try {
           const parsed = JSON.parse(code.data);
           bookingCode = parsed.code || code.data;
+          signature = parsed.sig || null;
         } catch {}
-        onScan(bookingCode);
+        onScan(bookingCode, signature);
         return;
       }
     } catch {}
@@ -317,14 +319,14 @@ export default function ScanQR() {
     loadRecentCodes(ev._id);
   };
 
-  const handleCheckIn = async (checkCode) => {
+  const handleCheckIn = async (checkCode, signature) => {
     const c = (checkCode || code).trim().toUpperCase();
     if (!c) { setResult({ error: 'Please enter a booking code' }); return; }
     if (!selectedEvent) { setResult({ error: 'Please select an event first' }); return; }
     setLoading(true); setScanning(true); setCameraOpen(false);
     await new Promise(r => setTimeout(r, 600));
     try {
-      const { data } = await checkIn(c, selectedEvent._id);
+      const { data } = await checkIn(c, selectedEvent._id, signature);
       setResult({ success: true });
       setScannedBooking(data.booking);
       launchConfetti();

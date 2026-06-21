@@ -16,7 +16,12 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
-app.use('/api/ratings', require('./routes/ratingRoutes'));
+// Note: ratings are handled via /api/events/:id/rate and /:id/ratings
+// inside eventRoutes.js (the version the frontend actually calls and that
+// correctly matches the Event schema's flat `rating`/`ratingCount` fields).
+// A separate, unused ratingRoutes.js + Rating-model-based system existed
+// here previously but wrote to a mismatched nested `rating.average` shape
+// that didn't match the schema — removed to avoid future confusion.
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 

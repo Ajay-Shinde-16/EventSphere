@@ -50,7 +50,7 @@ export const emailTicketImage = (bookingId, base64File, format = 'png') =>
 export const getMyBookings = () => API.get('/bookings/my');
 export const getEventBookings = (id) => API.get(`/bookings/event/${id}`);
 export const broadcastToAttendees = (eventId, data) => API.post(`/bookings/event/${eventId}/broadcast`, data);
-export const checkIn = (code, eventId) => API.put(`/bookings/checkin/${code}`, { eventId });
+export const checkIn = (code, eventId, signature) => API.put(`/bookings/checkin/${code}`, { eventId, signature });
 export const cancelBooking = (id) => API.put(`/bookings/cancel/${id}`);
 
 // Admin

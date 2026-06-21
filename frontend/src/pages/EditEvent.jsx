@@ -16,6 +16,32 @@ export default function EditEvent() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [msg, setMsg] = useState('');
+  const [imageError, setImageError] = useState('');
+
+  const handleImageUpload = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setImageError('Please upload an image file.'); return; }
+    if (file.size > 8 * 1024 * 1024) { setImageError('Image must be under 8MB.'); return; }
+    setImageError('');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const targetW = 1200, targetH = 600;
+        canvas.width = targetW; canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        const scale = Math.max(targetW / img.width, targetH / img.height);
+        const w = img.width * scale, h = img.height * scale;
+        ctx.drawImage(img, (targetW - w) / 2, (targetH - h) / 2, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        setForm(f => ({ ...f, image: dataUrl }));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => { loadEvent(); }, [id]);
 
@@ -36,6 +62,7 @@ export default function EditEvent() {
         totalSeats: data.totalSeats || 0,
         isFree: data.isFree || false,
         tags: (data.tags || []).join(', '),
+        image: data.image || '',
       });
       setTiers(data.isFree ? [] : (data.tiers?.length ? data.tiers.map(t => ({ name:t.name, price:t.price, seats:t.seats, bookedSeats:t.bookedSeats||0 })) : [{ name:'General', price:0, seats:0, bookedSeats:0 }]));
     } catch {
@@ -140,6 +167,28 @@ export default function EditEvent() {
           <div style={{ background:'var(--card-bg)', border:'1px solid var(--border)', borderRadius:16, padding:20, marginBottom:16 }}>
             <div style={{ fontSize:11, fontWeight:700, color:'var(--cyan)', letterSpacing:2, textTransform:'uppercase', marginBottom:16, display:'flex', alignItems:'center', gap:6 }}>
               <i className="bi bi-info-circle"/>Basic Information
+            </div>
+
+            <div style={{ marginBottom:14 }}>
+              <label className="fl">Event Banner Image (optional)</label>
+              <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+                {form.image ? (
+                  <div style={{ position:'relative', width:140, height:70, borderRadius:10, overflow:'hidden', flexShrink:0 }}>
+                    <img src={form.image} alt="Banner preview" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
+                    <button type="button" onClick={()=>setForm({...form,image:''})} aria-label="Remove image"
+                      style={{ position:'absolute', top:3, right:3, width:20, height:20, borderRadius:6, background:'rgba(0,0,0,0.6)', border:'none', color:'#fff', fontSize:11, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+                  </div>
+                ) : (
+                  <div style={{ width:140, height:70, borderRadius:10, border:'1px dashed var(--border)', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--muted)', fontSize:11, flexShrink:0, textAlign:'center', padding:4 }}>
+                    No image
+                  </div>
+                )}
+                <label style={{ padding:'9px 18px', borderRadius:10, fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:12, background:'var(--surface2)', border:'1px solid var(--border)', color:'var(--cyan)', cursor:'pointer' }}>
+                  <i className="bi bi-upload me-2"/>{form.image ? 'Replace' : 'Upload Image'}
+                  <input type="file" accept="image/*" onChange={e=>handleImageUpload(e.target.files?.[0])} style={{ display:'none' }}/>
+                </label>
+              </div>
+              {imageError && <p style={{ fontSize:11, color:'var(--pink)', marginTop:6 }}>{imageError}</p>}
             </div>
 
             <div style={{ marginBottom:14 }}>

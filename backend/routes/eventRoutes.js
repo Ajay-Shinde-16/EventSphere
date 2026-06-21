@@ -7,7 +7,7 @@ const { protect, organizerOnly } = require('../middleware/authMiddleware');
 // Get all approved events
 router.get('/', async (req, res) => {
   try {
-    const { category, city, search, page = 1, limit = 20, includePast, dateFrom, dateTo } = req.query;
+    const { category, city, search, page = 1, limit = 20, includePast, dateFrom, dateTo, priceMin, priceMax } = req.query;
     const filter = { status: 'approved' };
     if (category && category !== 'all') filter.category = category;
     if (city) filter.city = new RegExp(city, 'i');
@@ -25,6 +25,17 @@ router.get('/', async (req, res) => {
       filter.date = filter.date || {};
       if (dateFrom) filter.date.$gte = new Date(dateFrom);
       if (dateTo) filter.date.$lte = new Date(dateTo);
+    }
+
+    // Price isn't a top-level field — it lives inside each event's tiers
+    // array. $elemMatch finds events where AT LEAST ONE tier's price falls
+    // in the requested range, so e.g. "under ₹500" correctly surfaces an
+    // event that has a cheap General tier even if its VIP tier costs more.
+    if (priceMin !== undefined || priceMax !== undefined) {
+      const priceCond = {};
+      if (priceMin !== undefined) priceCond.$gte = Number(priceMin);
+      if (priceMax !== undefined) priceCond.$lte = Number(priceMax);
+      filter.tiers = { $elemMatch: { price: priceCond } };
     }
 
     // Search matches title, description, and tags — using regex (not $text)
@@ -78,13 +89,14 @@ router.get('/:id', async (req, res) => {
 // Create event
 router.post('/', protect, organizerOnly, async (req, res) => {
   try {
-    const { title, description, category, date, time, venue, city, tiers, totalSeats, isFree, tags } = req.body;
+    const { title, description, category, date, time, venue, city, tiers, totalSeats, isFree, tags, image } = req.body;
     if (!title || !category || !date || !venue || !city)
       return res.status(400).json({ message: 'Title, category, date, venue and city are required.' });
     const event = await Event.create({
       title, description, category, date, time, venue, city,
       tiers: tiers || [], totalSeats, isFree: isFree || false,
       organizer: req.user._id, status: 'pending', tags: tags || [],
+      image: image || '',
     });
     res.status(201).json(event);
   } catch (err) {

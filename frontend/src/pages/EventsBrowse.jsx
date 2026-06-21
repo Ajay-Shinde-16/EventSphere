@@ -38,6 +38,11 @@ function EventCard({ ev, featured, onClick }) {
       style={{ background:'var(--card-bg)', border:`1px solid ${hovered?col+'44':'var(--border)'}`, cursor:'pointer', transition:'all 0.25s', boxShadow: hovered?`var(--shadow),0 0 20px ${col}18`:'var(--shadow)' }}
       onClick={onClick} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}>
       <div style={{ height:3, background:`linear-gradient(90deg,${col},transparent)` }}/>
+      {ev.image && (
+        <div style={{ width:'100%', height:140, overflow:'hidden' }}>
+          <img src={ev.image} alt={ev.title} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
+        </div>
+      )}
       <div style={{ padding:20 }}>
         <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
           <span style={{ padding:'3px 10px', borderRadius:20, fontSize:10, fontWeight:700, background:`${col}18`, color:col }}>{ev.category}</span>
@@ -75,27 +80,35 @@ export default function EventsBrowse() {
   const [category, setCategory] = useState('all');
   const [city, setCity]         = useState('');
   const [search, setSearch]     = useState('');
+  const [priceMax, setPriceMax] = useState(''); // empty = no limit
+  const [page, setPage]         = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search).get('search')||'';
     if (q) setSearch(q);
-    fetchEvents(q);
-  }, [category, city]);
+    setPage(1);
+    fetchEvents(q, 1, false);
+  }, [category, city, priceMax]);
 
-  const fetchEvents = async (q='') => {
-    setLoading(true);
+  const fetchEvents = async (q='', pageNum=1, append=false) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     try {
-      const params = {};
+      const params = { page: pageNum, limit: 12 };
       if (category!=='all') params.category=category;
       if (city) params.city=city;
       if (q||search) params.search=q||search;
+      if (priceMax !== '') params.priceMax=priceMax;
       const { data } = await getEvents(params);
-      setEvents(data.events||[]);
-    } catch { setEvents([]); }
-    finally { setLoading(false); }
+      setEvents(prev => append ? [...prev, ...(data.events||[])] : (data.events||[]));
+      setTotalPages(data.pages || 1);
+      setPage(pageNum);
+    } catch { if (!append) setEvents([]); }
+    finally { setLoading(false); setLoadingMore(false); }
   };
 
-  const doSearch = () => fetchEvents(search);
+  const doSearch = () => { setPage(1); fetchEvents(search, 1, false); };
 
   const cats = [
     {key:'all',label:'All Events'},{key:'Tech',dot:'#00F2FE'},{key:'Music',dot:'#9B51E0'},
@@ -139,6 +152,15 @@ export default function EventsBrowse() {
           ))}
           <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
             <select style={{ fontSize:12, background:'transparent', border:'none', outline:'none', cursor:'pointer', color:'var(--muted)', fontFamily:"'Plus Jakarta Sans',sans-serif" }}
+              value={priceMax} onChange={e=>setPriceMax(e.target.value)}>
+              <option value="">Any Price</option>
+              <option value="0">Free only</option>
+              <option value="500">Under ₹500</option>
+              <option value="1000">Under ₹1,000</option>
+              <option value="2500">Under ₹2,500</option>
+              <option value="5000">Under ₹5,000</option>
+            </select>
+            <select style={{ fontSize:12, background:'transparent', border:'none', outline:'none', cursor:'pointer', color:'var(--muted)', fontFamily:"'Plus Jakarta Sans',sans-serif" }}
               value={city} onChange={e=>setCity(e.target.value)}>
               <option value="">All Cities</option>
               {['Bangalore','Mumbai','Hyderabad','Pune','Delhi','Chennai'].map(c=><option key={c}>{c}</option>)}
@@ -164,6 +186,17 @@ export default function EventsBrowse() {
         ) : (
           <div className="fade-up" style={{ maxWidth:1400, margin:'0 auto', display:'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(auto-fill,minmax(300px,1fr))', gap: isMobile ? 12 : 20, padding: isMobile ? '14px 14px 24px' : '24px 24px 48px' }}>
             {events.map((ev)=><EventCard key={ev._id} ev={ev} featured={false} onClick={()=>navigate(`/events/${ev._id}`)}/>)}
+          </div>
+        )}
+        {!loading && events.length > 0 && page < totalPages && (
+          <div style={{ textAlign:'center', paddingBottom:48 }}>
+            <button onClick={() => fetchEvents(search, page + 1, true)} disabled={loadingMore}
+              style={{ padding:'12px 32px', borderRadius:50, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:13, background:'var(--surface3)', border:'1px solid var(--border)', color:'var(--cyan)', cursor: loadingMore ? 'not-allowed' : 'pointer', display:'inline-flex', alignItems:'center', gap:8 }}>
+              {loadingMore
+                ? <><div style={{ width:14,height:14,border:'2px solid rgba(56,189,248,0.3)',borderTopColor:'var(--cyan)',borderRadius:'50%',animation:'spin 0.7s linear infinite' }}/>Loading...</>
+                : <>Load More Events <i className="bi bi-arrow-down"/></>}
+            </button>
+            <p style={{ fontSize:11, color:'var(--muted)', marginTop:10 }}>Page {page} of {totalPages}</p>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 const express = require('express');
 const router  = express.Router();
+const crypto  = require('crypto');
 const Booking = require('../models/Booking');
 const Event   = require('../models/Event');
 const User    = require('../models/User');
@@ -9,6 +10,24 @@ const { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail, cancella
 const QRCode = require('qrcode');
 const { createNotification } = require('./notificationRoutes');
 const { verifyPaymentSignature, getRazorpay } = require('./paymentRoutes');
+
+// Signs a booking code with HMAC-SHA256 using JWT_SECRET as the key, so the
+// QR code's payload can be cryptographically verified at check-in instead
+// of just being a JSON-wrapped copy of the booking code that anyone could
+// hand-craft if they guessed/knew a valid code. Truncated to 16 hex chars —
+// plenty of entropy for this purpose, keeps the QR payload small.
+function signBookingCode(code) {
+  return crypto.createHmac('sha256', process.env.JWT_SECRET || 'fallback-secret')
+    .update(code)
+    .digest('hex')
+    .slice(0, 16);
+}
+function verifyBookingSignature(code, signature) {
+  if (!signature) return false;
+  const expected = signBookingCode(code);
+  // Constant-time comparison to avoid timing-attack leakage of the signature
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature.padEnd(16, '0').slice(0, 16)));
+}
 
 // Create booking
 router.post('/', protect, async (req, res) => {
@@ -25,6 +44,23 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'This event has already taken place and is no longer accepting bookings.' });
     if (event.bookedSeats + seats > event.totalSeats)
       return res.status(400).json({ message: 'Not enough seats available' });
+
+    // Server-side anti-scalping guard: cap how many seats any single
+    // account can hold for one event. The frontend's seat-count stepper
+    // only capped at 10, but a user could still click 50+ individual seats
+    // directly on the grid — each becomes its own booking request, so this
+    // check (counting their EXISTING confirmed bookings for this event,
+    // not just this one request) is the only place this is actually
+    // enforced and can't be bypassed by calling the API directly.
+    const MAX_SEATS_PER_USER_PER_EVENT = 10;
+    const existingSeatsForUser = await Booking.countDocuments({
+      user: req.user._id, event: eventId, status: 'confirmed',
+    });
+    if (existingSeatsForUser + seats > MAX_SEATS_PER_USER_PER_EVENT) {
+      return res.status(400).json({
+        message: `You can book at most ${MAX_SEATS_PER_USER_PER_EVENT} seats per event. You already have ${existingSeatsForUser}.`,
+      });
+    }
 
     const totalAmount = (tierPrice || 0) * seats;
 
@@ -65,10 +101,23 @@ router.post('/', protect, async (req, res) => {
       ...(razorpayOrderId && { razorpayOrderId }),
       ...(razorpayPaymentId && { razorpayPaymentId }),
     });
-    await booking.save();
+    try {
+      await booking.save();
+    } catch (saveErr) {
+      // code 11000 = duplicate key — the partial unique index on
+      // (event, seatNumbers, status:'confirmed') caught a genuine race
+      // condition: someone else's booking for this exact seat landed in
+      // the database in the tiny window between our earlier "is it free?"
+      // check and this save. This is the real backstop, not just a
+      // theoretical scenario.
+      if (saveErr.code === 11000) {
+        return res.status(409).json({ message: 'This seat was just booked by someone else. Please refresh and pick a different seat.' });
+      }
+      throw saveErr;
+    }
 
     // Generate QR
-    const qrPayload = JSON.stringify({ code: booking.bookingCode, event: event.title, user: req.user.name, tier, seats });
+    const qrPayload = JSON.stringify({ code: booking.bookingCode, event: event.title, user: req.user.name, tier, seats, sig: signBookingCode(booking.bookingCode) });
     booking.qrData = await QRCode.toDataURL(qrPayload, { errorCorrectionLevel: 'H', width: 250 });
     await booking.save();
 
@@ -211,11 +260,22 @@ router.post('/event/:id/broadcast', protect, organizerOnly, async (req, res) => 
 // can't accidentally check a ticket into the wrong event's gate.
 router.put('/checkin/:code', protect, organizerOnly, async (req, res) => {
   try {
-    const { eventId } = req.body; // which event the organizer is currently scanning for
+    const { eventId, signature } = req.body; // which event the organizer is currently scanning for
     const booking = await Booking.findOne({ bookingCode: req.params.code })
       .populate('event', 'title date time venue city category tiers')
       .populate('user', 'name email');
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    // If a signature came along (i.e. this was a real QR scan, not manual
+    // code entry), it MUST match — otherwise this is either a corrupted
+    // scan or someone hand-crafted a fake QR with a guessed/known booking
+    // code. Manual typing has no signature at all, which is allowed
+    // through deliberately (organizers sometimes type codes when a phone
+    // camera/QR isn't available) — the signature only adds extra
+    // assurance specifically for the scan path, it isn't the sole gate.
+    if (signature && !verifyBookingSignature(booking.bookingCode, signature)) {
+      return res.status(400).json({ message: 'This QR code failed verification and may be invalid or tampered with. Please ask the attendee to show their original email/ticket.' });
+    }
 
     // Reject if this ticket belongs to a different event than the one selected
     if (eventId && booking.event?._id?.toString() !== eventId.toString()) {
@@ -322,7 +382,7 @@ router.post('/:id/email-ticket-image', protect, async (req, res) => {
 router.put('/cancel/:id', protect, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate('event', 'title date venue city')
+      .populate('event', 'title date venue city organizer')
       .populate('user', 'name email');
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     if (booking.user._id.toString() !== req.user._id.toString())
@@ -389,6 +449,26 @@ router.put('/cancel/:id', protect, async (req, res) => {
       const tierIdx = event.tiers.findIndex(t => t.name === booking.tier);
       if (tierIdx >= 0) event.tiers[tierIdx].bookedSeats = Math.max(0, (event.tiers[tierIdx].bookedSeats||0) - booking.seats);
       await event.save();
+
+      // Notify the organizer that someone cancelled — previously they had
+      // no way to know their attendee count changed except by manually
+      // re-checking the dashboard. Fire-and-forget so it doesn't slow
+      // down the cancel response.
+      setImmediate(async () => {
+        try {
+          await createNotification({
+            user: event.organizer,
+            type: 'cancellation',
+            title: 'Attendee Cancelled',
+            message: `${booking.user.name} cancelled their booking for "${event.title}" (${booking.seats} seat${booking.seats>1?'s':''} now available again).`,
+            icon: 'bi-person-dash-fill',
+            color: 'var(--amber)',
+            link: '/org-dashboard',
+          });
+        } catch (e) {
+          console.log('Organizer cancellation notification error (non-fatal):', e.message);
+        }
+      });
 
       // ── FEATURE 3: Notify waitlisted users ──────────────────
       // Fire-and-forget: don't block the cancel response
