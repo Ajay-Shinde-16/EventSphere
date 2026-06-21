@@ -74,10 +74,45 @@ function GlobalShortcuts() {
   return null;
 }
 
+// Shown once, briefly, right after the 5-minute inactivity auto-logout
+// fires — so the person understands why they were suddenly signed out
+// instead of just landing back on the login page with no explanation.
+function AutoLogoutBanner() {
+  const { autoLoggedOut, clearAutoLoggedOut } = useContext(AuthContext);
+  useEffect(() => {
+    if (!autoLoggedOut) return;
+    const id = setTimeout(clearAutoLoggedOut, 6000);
+    return () => clearTimeout(id);
+  }, [autoLoggedOut]);
+  if (!autoLoggedOut) return null;
+  return (
+    <div
+      style={{
+        position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 2000, maxWidth: 'min(420px, 92vw)', padding: '14px 18px',
+        borderRadius: 14, background: 'rgba(251,191,36,0.12)',
+        border: '1px solid rgba(251,191,36,0.3)', backdropFilter: 'blur(10px)',
+        display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 12px 32px rgba(0,0,0,0.3)',
+      }}
+    >
+      <i className="bi bi-shield-lock-fill" style={{ color: 'var(--amber)', fontSize: 18, flexShrink: 0 }} />
+      <span style={{ fontSize: 13, color: 'var(--text)', flex: 1 }}>
+        You were signed out after 5 minutes of inactivity for your security.
+      </span>
+      <button
+        onClick={clearAutoLoggedOut}
+        aria-label="Dismiss"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, flexShrink: 0 }}
+      >✕</button>
+    </div>
+  );
+}
+
 function AppShell() {
   return (
     <div style={{ minHeight:'100vh' }}>
       <GlobalShortcuts />
+      <AutoLogoutBanner />
       <Navbar />
       <main>
         <Suspense fallback={<PageLoading />}>

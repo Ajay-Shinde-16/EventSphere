@@ -143,6 +143,26 @@ router.get('/:id/waitlist', async (req, res) => {
   }
 });
 
+// Organizer-only: the actual list of waitlisted people (name + email),
+// not just a count — so the organizer can see who's waiting and reach
+// out directly if they want to (e.g. offer them a similar event, or a
+// heads-up that more seats might open).
+router.get('/:id/waitlist/details', protect, organizerOnly, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+    if (event.organizer.toString() !== req.user._id.toString() && req.user.role !== 'admin')
+      return res.status(403).json({ message: 'Not authorized' });
+
+    const waitlist = await Waitlist.find({ event: req.params.id })
+      .populate('user', 'name email')
+      .sort({ createdAt: 1 }); // earliest first — who's been waiting longest
+    res.json(waitlist);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Rate event
 router.post('/:id/rate', protect, async (req, res) => {
   try {

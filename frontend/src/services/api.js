@@ -41,6 +41,7 @@ export const deleteEvent = (id) => API.delete(`/events/${id}`);
 export const joinWaitlist = (id) => API.post(`/events/${id}/waitlist`);
 export const rateEvent = (id, data) => API.post(`/events/${id}/rate`, data);
 export const getEventRatings = (id) => API.get(`/events/${id}/ratings`);
+export const getWaitlistDetails = (id) => API.get(`/events/${id}/waitlist/details`);
 
 // Bookings
 export const createBooking = (data) => API.post('/bookings', data);

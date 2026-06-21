@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 // build-marker: restored-working-version-2026-06-19
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents, emailTicketImage, createPaymentOrder } from '../services/api';
+import { getEvent, createBooking, joinWaitlist, rateEvent, getEvents, emailTicketImage, createPaymentOrder, getEventRatings } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { generateTicketPDF } from '../utils/ticketImage';
@@ -237,12 +237,14 @@ export default function EventDetail() {
   const [rating, setRating]             = useState(0);
   const [comment, setComment]           = useState('');
   const [ratingDone, setRatingDone]     = useState(false);
+  const [reviews, setReviews]           = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [shareMsg, setShareMsg]         = useState('');
   const [aiRecs, setAiRecs]             = useState(null);
   const [aiRecsLoading, setAiRecsLoading] = useState(false);
   const [allEvents, setAllEvents]       = useState([]);
 
-  useEffect(() => { fetchEvent(); }, [id]);
+  useEffect(() => { fetchEvent(); fetchReviews(); }, [id]);
 
   const fetchEvent = async () => {
     try {
@@ -254,6 +256,14 @@ export default function EventDetail() {
       setAllEvents(allRes.data?.events || []);
     } catch { navigate('/'); }
     finally { setLoading(false); }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const { data } = await getEventRatings(id);
+      setReviews(data || []);
+    } catch {}
+    finally { setReviewsLoading(false); }
   };
 
   const fetchAiRecs = async (ev) => {
@@ -724,11 +734,49 @@ Base your reasoning on category similarity, city match, price range, and tag ove
                   ))}
                 </div>
                 <textarea className="fta" placeholder="Share your thoughts about this event..." value={comment} onChange={e=>setComment(e.target.value)} style={{ marginBottom:12, minHeight:80 }}/>
-                <button onClick={async()=>{ if(!user){navigate('/login');return;} if(!rating){alert('Please select stars');return;} try{await rateEvent(id,{rating,comment});setRatingDone(true);}catch(e){alert(e.response?.data?.message||'Error');}}}
+                <button onClick={async()=>{ if(!user){navigate('/login');return;} if(!rating){alert('Please select stars');return;} try{await rateEvent(id,{rating,comment});setRatingDone(true);fetchReviews();}catch(e){alert(e.response?.data?.message||'Error');}}}
                   style={{ padding:'10px 24px', borderRadius:12, fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:13, background:'linear-gradient(135deg,var(--amber),var(--pink))', color:'#000', border:'none', cursor:'pointer' }}>
                   Submit Rating
                 </button>
               </>
+            )}
+
+            {/* ── Reviews from other attendees ── */}
+            {!reviewsLoading && reviews.length > 0 && (
+              <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid var(--border)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    {[1,2,3,4,5].map(s => {
+                      const avg = reviews.reduce((sum,r)=>sum+r.rating,0) / reviews.length;
+                      return <i key={s} className={`bi ${s<=Math.round(avg)?'bi-star-fill':'bi-star'}`} style={{ color:'var(--amber)', fontSize:14 }}/>;
+                    })}
+                  </div>
+                  <span style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:800, fontSize:14, color:'var(--heading)' }}>
+                    {(reviews.reduce((sum,r)=>sum+r.rating,0) / reviews.length).toFixed(1)}
+                  </span>
+                  <span style={{ fontSize:12, color:'var(--muted)' }}>({reviews.length} review{reviews.length>1?'s':''})</span>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:12, maxHeight:320, overflowY:'auto' }}>
+                  {reviews.map((r,i) => (
+                    <div key={r._id||i} style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:12, padding:14 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6, gap:8 }}>
+                        <span style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:13, color:'var(--heading)' }}>{r.user?.name || 'Anonymous'}</span>
+                        <div style={{ display:'flex', gap:2, flexShrink:0 }}>
+                          {[1,2,3,4,5].map(s => (
+                            <i key={s} className={`bi ${s<=r.rating?'bi-star-fill':'bi-star'}`} style={{ color:'var(--amber)', fontSize:11 }}/>
+                          ))}
+                        </div>
+                      </div>
+                      {r.comment && <p style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{r.comment}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!reviewsLoading && reviews.length === 0 && (
+              <p style={{ marginTop:20, paddingTop:20, borderTop:'1px solid var(--border)', fontSize:13, color:'var(--muted)', textAlign:'center' }}>
+                No reviews yet — be the first to share your thoughts!
+              </p>
             )}
           </div>
           )}

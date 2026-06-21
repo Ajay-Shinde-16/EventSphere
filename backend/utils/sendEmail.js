@@ -105,17 +105,10 @@ const bookingConfirmationEmail = (user, event, booking) => {
     ? getSeatLabels(booking.seatNumbers, event.tiers)
     : booking.seats + ' seat(s)';
 
-  // QR code attachment
-  const attachments = [];
-  if (booking.qrData && booking.qrData.startsWith('data:image/')) {
-    const base64Data = booking.qrData.split(',')[1];
-    attachments.push({
-      filename: `QR-${booking.bookingCode}.png`,
-      content: base64Data,
-      encoding: 'base64',
-      cid: 'qrcode@eventsphere',
-    });
-  }
+  // QR code is embedded directly inline as a base64 data URI in the <img> tag
+  // below (no attachment / cid needed — Brevo's API doesn't resolve cid:
+  // references the way SMTP clients like nodemailer do, so this is the
+  // reliable cross-client way to show the QR code inside the email body).
 
   const html = `<!DOCTYPE html>
 <html>
@@ -235,7 +228,7 @@ const bookingConfirmationEmail = (user, event, booking) => {
       ${booking.qrData ? `
       <div class="qr-section">
         <div style="font-size:12px;color:#8892A4;margin-bottom:12px;letter-spacing:2px;font-weight:700;">SCAN TO CHECK IN</div>
-        <img src="cid:qrcode@eventsphere" alt="QR Code" />
+        <img src="${booking.qrData}" alt="QR Code" />
         <div class="qr-note">Powered by EventSphere — One QR, instant entry</div>
       </div>` : ''}
     </div>
@@ -251,7 +244,7 @@ const bookingConfirmationEmail = (user, event, booking) => {
 </body>
 </html>`;
 
-  return { to: user.email, subject: `🎫 Your Ticket — ${event.title} | EventSphere`, html, attachments };
+  return { to: user.email, subject: `🎫 Your Ticket — ${event.title} | EventSphere`, html };
 };
 
 // (module.exports moved to end of file)
@@ -378,4 +371,68 @@ const forgotPasswordEmail = (user, resetUrl) => {
   return { to: user.email, subject: `🔐 Reset your EventSphere password`, html };
 };
 
-module.exports = { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail, forgotPasswordEmail };
+// Sent on every booking cancellation, regardless of whether it was paid or
+// free — for paid bookings, clearly states the exact refund amount and that
+// it's already been processed, so the user isn't left wondering whether
+// they'll get their money back (this was the actual feature requested:
+// users had no email confirming a refund happened, only an in-app notice).
+const cancellationRefundEmail = (user, event, booking, refundAmount) => {
+  const isPaid = refundAmount > 0;
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#0B0F19; font-family:'Segoe UI',Arial,sans-serif; color:#E2E8F0; padding:20px; }
+  .wrap { max-width:580px; margin:0 auto; }
+  .header { background:linear-gradient(135deg,#F4728218,#9B51E018); border:1px solid #F4728230; border-radius:16px 16px 0 0; padding:28px 32px; text-align:center; position:relative; overflow:hidden; }
+  .header::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#F47282,#9B51E0); }
+  .logo { font-size:20px; font-weight:900; color:#F47282; letter-spacing:2px; margin-bottom:6px; }
+  .body { background:#171E2E; border:1px solid rgba(255,255,255,0.07); border-top:none; padding:28px 32px; }
+  .alert-box { background:${isPaid ? 'rgba(5,255,155,0.06)' : 'rgba(244,114,130,0.06)'}; border:1px solid ${isPaid ? 'rgba(5,255,155,0.25)' : 'rgba(244,114,130,0.2)'}; border-radius:14px; padding:20px; margin-bottom:22px; text-align:center; }
+  .alert-icon { font-size:36px; margin-bottom:10px; }
+  .alert-title { font-size:20px; font-weight:900; color:${isPaid ? '#05FF9B' : '#F47282'}; margin-bottom:4px; }
+  .alert-sub { font-size:13px; color:#8892A4; }
+  .refund-amount { font-size:32px; font-weight:900; color:#05FF9B; margin:14px 0 4px; }
+  .event-card { background:#1E2840; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:18px; margin-bottom:20px; }
+  .event-title { font-size:18px; font-weight:800; color:#fff; margin-bottom:8px; }
+  .event-detail { display:flex; align-items:center; gap:8px; font-size:13px; color:#8892A4; margin-bottom:6px; }
+  .footer { background:#0B0F19; border:1px solid rgba(255,255,255,0.05); border-top:none; border-radius:0 0 16px 16px; padding:16px 32px; text-align:center; color:#8892A4; font-size:11px; line-height:1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">⬡ EVENTSPHERE</div>
+    <div style="font-size:13px;color:#8892A4;">Booking Cancelled</div>
+  </div>
+  <div class="body">
+    <div class="alert-box">
+      <div class="alert-icon">${isPaid ? '💸' : '❌'}</div>
+      <div class="alert-title">${isPaid ? 'Refund Processed' : 'Booking Cancelled'}</div>
+      <div class="alert-sub">Booking code: ${booking.bookingCode}</div>
+      ${isPaid ? `<div class="refund-amount">₹${refundAmount.toLocaleString()}</div><div class="alert-sub">refunded to your original payment method</div>` : ''}
+    </div>
+    <div class="event-card">
+      <div class="event-title">${event.title}</div>
+      <div class="event-detail">📅 ${new Date(event.date).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      <div class="event-detail">📍 ${event.venue}, ${event.city}</div>
+    </div>
+    <p style="font-size:13px;color:#8892A4;line-height:1.7;">
+      ${isPaid
+        ? `Your refund of <strong style="color:#E2E8F0;">₹${refundAmount.toLocaleString()}</strong> has already been processed and should reflect in your original payment method within 5-7 business days, depending on your bank.`
+        : `This was a free booking, so there is no payment to refund. The seat has been released back into the event's availability.`}
+    </p>
+  </div>
+  <div class="footer">
+    Hi ${user.name}, this confirms your cancellation request was completed.<br/>
+    <span style="color:#4B5563">© 2026 EventSphere — C-DAC Bangalore</span>
+  </div>
+</div>
+</body>
+</html>`;
+
+  return { to: user.email, subject: `${isPaid ? '💸 Refund Processed' : '❌ Booking Cancelled'} — ${event.title}`, html };
+};
+
+module.exports = { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail, forgotPasswordEmail, cancellationRefundEmail };

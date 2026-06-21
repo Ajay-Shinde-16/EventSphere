@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import { useNavigate } from 'react-router-dom';
-import { getMyEvents, getEventBookings, deleteEvent, broadcastToAttendees } from '../services/api';
+import { getMyEvents, getEventBookings, deleteEvent, broadcastToAttendees, getWaitlistDetails } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   Chart as ChartJS,
@@ -143,12 +143,77 @@ function BroadcastModal({ event, onClose }) {
   );
 }
 
+/* ── Waitlist Details Modal ─────────────────────────────────────
+   Shows the organizer exactly who's waiting for a sold-out event —
+   name, email, and how long they've been waiting — so they can reach
+   out directly if they choose to, rather than only seeing a count. */
+function WaitlistModal({ event, onClose }) {
+  const [waitlist, setWaitlist] = useState(null); // null = loading
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getWaitlistDetails(event._id)
+      .then(({ data }) => setWaitlist(data))
+      .catch(err => setError(err.response?.data?.message || 'Failed to load waitlist'));
+  }, [event._id]);
+
+  const timeAgo = (date) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const hrs = Math.floor(diff / 3600000);
+    if (hrs < 1) return 'Just now';
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:'100%', maxWidth:480, maxHeight:'80vh', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:20, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+        <div style={{ height:4, background:'linear-gradient(90deg,var(--cyan),var(--purple))', flexShrink:0 }}/>
+        <div style={{ padding:24, flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.05rem', color:'var(--heading)', display:'flex', alignItems:'center', gap:8 }}>
+              <i className="bi bi-hourglass-split" style={{ color:'var(--cyan)' }}/>Waitlist
+            </h3>
+            <button onClick={onClose} aria-label="Close" style={{ background:'none', border:'none', cursor:'pointer', color:'var(--muted)', fontSize:18 }}>✕</button>
+          </div>
+          <p style={{ fontSize:12, color:'var(--muted)', marginTop:4 }}>People waiting for a seat in <strong style={{ color:'var(--text)' }}>{event.title}</strong></p>
+        </div>
+        <div style={{ padding:'0 24px 24px', overflowY:'auto', flex:1 }}>
+          {error && <p style={{ color:'var(--pink)', fontSize:13 }}>{error}</p>}
+          {!error && waitlist === null && (
+            <div style={{ textAlign:'center', padding:'30px 0' }}>
+              <div style={{ width:32,height:32,border:'3px solid var(--surface2)',borderTopColor:'var(--cyan)',borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto' }}/>
+            </div>
+          )}
+          {waitlist?.length === 0 && (
+            <p style={{ fontSize:13, color:'var(--muted)', textAlign:'center', padding:'20px 0' }}>No one is currently on the waitlist for this event.</p>
+          )}
+          {waitlist?.length > 0 && (
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {waitlist.map((w, i) => (
+                <div key={w._id || i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 14px' }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:700, fontSize:13, color:'var(--heading)' }}>{w.user?.name || 'Unknown'}</div>
+                    <div style={{ fontSize:11, color:'var(--muted)', overflow:'hidden', textOverflow:'ellipsis' }}>{w.user?.email}</div>
+                  </div>
+                  <span style={{ fontSize:10, color:'var(--cyan)', fontWeight:700, flexShrink:0, whiteSpace:'nowrap' }}>#{i+1} · {timeAgo(w.createdAt)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OrgDashboard() {
   const [events, setEvents]       = useState([]);
   const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [msgModalEvent, setMsgModalEvent] = useState(null); // event being messaged, or null
+  const [waitlistModalEvent, setWaitlistModalEvent] = useState(null); // event whose waitlist is being viewed, or null
   const { user } = useAuth();
   const navigate  = useNavigate();
   const { isMobile } = useResponsive();
@@ -290,6 +355,7 @@ export default function OrgDashboard() {
   return (
     <div className="flex fade-up" style={{ minHeight:'calc(100vh - 60px)', width:'100%', maxWidth:'100vw', overflowX:'hidden' }}>
       {msgModalEvent && <BroadcastModal event={msgModalEvent} onClose={() => setMsgModalEvent(null)} />}
+      {waitlistModalEvent && <WaitlistModal event={waitlistModalEvent} onClose={() => setWaitlistModalEvent(null)} />}
       <Sidebar active="orgdash"/>
 
       <div style={{ flex:1, padding: isMobile ? '14px 16px' : '24px', minWidth:0, maxWidth:'100%' }}>
@@ -438,6 +504,8 @@ export default function OrgDashboard() {
                                 style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(155,81,224,0.08)',color:'var(--purple)',border:'1px solid rgba(155,81,224,0.2)',cursor:'pointer' }}>Edit</button>
                               <button onClick={()=>setMsgModalEvent(ev)}
                                 style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(251,191,36,0.08)',color:'var(--amber)',border:'1px solid rgba(251,191,36,0.2)',cursor:'pointer' }}>Message</button>
+                              <button onClick={()=>setWaitlistModalEvent(ev)}
+                                style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(56,189,248,0.08)',color:'var(--cyan)',border:'1px solid rgba(56,189,248,0.2)',cursor:'pointer' }}>Waitlist</button>
                               <button onClick={()=>navigate('/scan-qr')}
                                 style={{ padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(0,242,254,0.08)',color:'var(--cyan)',border:'1px solid rgba(0,242,254,0.2)',cursor:'pointer' }}>Scan</button>
                               <button onClick={()=>handleDelete(ev._id)}

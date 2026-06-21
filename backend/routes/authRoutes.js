@@ -1,13 +1,36 @@
 const express  = require('express');
 const router   = express.Router();
 const crypto   = require('crypto');
+const rateLimit = require('express-rate-limit');
 const User     = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const { protect }   = require('../middleware/authMiddleware');
 const { sendEmail, forgotPasswordEmail } = require('../utils/sendEmail');
 
+// Brute-force protection: without this, anyone could script unlimited
+// password guesses against any account. 8 attempts per 15 minutes per IP
+// is generous enough for a real user who mistypes their password a few
+// times, but stops automated guessing dead.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  message: { message: 'Too many login attempts. Please wait 15 minutes and try again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Looser limit for registration — mainly to stop scripted account-creation
+// spam, not to annoy genuine users who rarely register more than once.
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many registration attempts from this network. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ── Register ──────────────────────────────────────────────────
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
     if (!name || !email || !password)
@@ -53,7 +76,7 @@ router.post('/register-admin', async (req, res) => {
 });
 
 // ── Login ─────────────────────────────────────────────────────
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
@@ -104,7 +127,7 @@ router.put('/me', protect, async (req, res) => {
 });
 
 // ── Forgot Password — send reset email ────────────────────────
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', loginLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required.' });

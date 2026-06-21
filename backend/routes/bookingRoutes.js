@@ -5,7 +5,7 @@ const Event   = require('../models/Event');
 const User    = require('../models/User');
 const { Rating, Waitlist } = require('../models/Rating');
 const { protect, organizerOnly } = require('../middleware/authMiddleware');
-const { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail } = require('../utils/sendEmail');
+const { sendEmail, bookingConfirmationEmail, waitlistNotificationEmail, cancellationRefundEmail } = require('../utils/sendEmail');
 const QRCode = require('qrcode');
 const { createNotification } = require('./notificationRoutes');
 const { verifyPaymentSignature, getRazorpay } = require('./paymentRoutes');
@@ -321,9 +321,11 @@ router.post('/:id/email-ticket-image', protect, async (req, res) => {
 // Cancel booking
 router.put('/cancel/:id', protect, async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id)
+      .populate('event', 'title date venue city')
+      .populate('user', 'name email');
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
-    if (booking.user.toString() !== req.user._id.toString())
+    if (booking.user._id.toString() !== req.user._id.toString())
       return res.status(403).json({ message: 'Not authorized' });
     if (booking.status === 'cancelled')
       return res.status(400).json({ message: 'Already cancelled' });
@@ -368,8 +370,20 @@ router.put('/cancel/:id', protect, async (req, res) => {
       link: '/my-tickets',
     });
 
+    // Email confirmation of the cancellation/refund — this is the actual
+    // feature requested: users previously only saw an in-app notification
+    // and had no email proof that a refund was genuinely processed.
+    setImmediate(async () => {
+      try {
+        const emailOpts = cancellationRefundEmail(booking.user, booking.event, booking, booking.totalAmount > 0 ? booking.totalAmount : 0);
+        await sendEmail(emailOpts);
+      } catch (e) {
+        console.log('Cancellation email error (non-fatal):', e.message);
+      }
+    });
+
     // Restore seat count
-    const event = await Event.findById(booking.event);
+    const event = await Event.findById(booking.event._id);
     if (event) {
       event.bookedSeats = Math.max(0, event.bookedSeats - booking.seats);
       const tierIdx = event.tiers.findIndex(t => t.name === booking.tier);
