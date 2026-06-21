@@ -337,8 +337,34 @@ Base your reasoning on category similarity, city match, price range, and tag ove
   // Opens Razorpay's checkout modal for the given amount (in rupees).
   // Resolves with { orderId, paymentId, signature } on success, or
   // rejects with an Error if the user cancels or payment fails.
+  // Lazily loads Razorpay's checkout script the first time it's actually
+  // needed (i.e. when a paid booking is attempted), instead of every page
+  // load via a global <script> tag — most visits never touch payment at all.
+  const loadRazorpayScript = () => {
+    return new Promise((resolve, reject) => {
+      if (typeof window.Razorpay !== 'undefined') { resolve(); return; }
+      const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve());
+        existing.addEventListener('error', () => reject(new Error('Failed to load payment gateway script.')));
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load payment gateway script.'));
+      document.body.appendChild(script);
+    });
+  };
+
   const payWithRazorpay = (amountRupees) => {
     return new Promise(async (resolve, reject) => {
+      try {
+        await loadRazorpayScript();
+      } catch (err) {
+        reject(err);
+        return;
+      }
       if (typeof window.Razorpay === 'undefined') {
         reject(new Error('Payment gateway failed to load. Please refresh and try again.'));
         return;

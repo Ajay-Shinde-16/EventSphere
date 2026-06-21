@@ -184,7 +184,7 @@ export default function Navbar() {
                 </div>
                 {!isMobile && (
                   <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>Smart Ticketing</div>
-                )}
+                )}\
               </div>
             )}
           </div>
@@ -225,13 +225,14 @@ export default function Navbar() {
               style={{ ...iconBtn, color: darkMode ? 'var(--amber)' : 'var(--muted)' }}
               onClick={toggleDarkMode}
               title={darkMode ? 'Light mode' : 'Dark mode'}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               <i className={`bi ${darkMode ? 'bi-sun-fill' : 'bi-moon-fill'}`} />
             </button>
 
             {/* Notifications */}
             <div ref={notifRef} style={{ position: 'relative' }}>
-              <button style={iconBtn} onClick={() => setNotifOpen(v => !v)}>
+              <button style={iconBtn} onClick={() => setNotifOpen(v => !v)} aria-label="Notifications">
                 <i className="bi bi-bell-fill" />
                 {unreadCount > 0 && (
                   <span style={{
@@ -559,7 +560,7 @@ export default function Navbar() {
       )}
 
       {/* Back to top */}
-      <button id="back-to-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+      <button id="back-to-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Scroll to top">
         <i className="bi bi-chevron-up" style={{ color: '#000', fontWeight: 900 }} />
       </button>
     </>

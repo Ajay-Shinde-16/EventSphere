@@ -1,4 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+/* Google Fonts are loaded via the non-blocking <link> tags in index.html
+   (media="print" trick) — not duplicated here via @import, since @import
+   inside CSS is itself render-blocking and would undo that optimization.
+   Bootstrap Icons' font-display is controlled by the same non-blocking
+   <link> loading strategy in index.html, since we don't define its
+   @font-face ourselves (it ships inside the Bootstrap Icons CSS file). */
 
 @tailwind base;
 @tailwind components;

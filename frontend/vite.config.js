@@ -13,6 +13,9 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'es2020', // modern baseline — avoids unnecessary legacy
+                       // transpilation/polyfills for browsers (old Safari,
+                       // old Edge) that almost no real visitor uses anymore
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {

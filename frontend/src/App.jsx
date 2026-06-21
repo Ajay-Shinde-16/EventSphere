@@ -53,24 +53,26 @@ function AppShell() {
     <div style={{ minHeight:'100vh' }}>
       <GlobalShortcuts />
       <Navbar />
-      <Routes>
-        <Route path="/"                      element={<Home />} />
-        <Route path="/login"                 element={<Login />} />
-        <Route path="/register"              element={<Register />} />
-        <Route path="/forgot-password"       element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/admin-login"           element={<AdminLogin />} />
-        <Route path="/events-browse"         element={<EventsBrowse />} />
-        <Route path="/events/:id"            element={<EventDetail />} />
-        <Route path="/my-tickets"            element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
-        <Route path="/org-dashboard"         element={<OrganizerRoute><OrgDashboard /></OrganizerRoute>} />
-        <Route path="/create-event"          element={<OrganizerRoute><CreateEvent /></OrganizerRoute>} />
-        <Route path="/edit-event/:id"        element={<OrganizerRoute><EditEvent /></OrganizerRoute>} />
-        <Route path="/scan-qr"               element={<OrganizerRoute><ScanQR /></OrganizerRoute>} />
-        <Route path="/admin"                 element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/profile"               element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="*"                      element={<Navigate to="/" replace />} />
-      </Routes>
+      <main>
+        <Routes>
+          <Route path="/"                      element={<Home />} />
+          <Route path="/login"                 element={<Login />} />
+          <Route path="/register"              element={<Register />} />
+          <Route path="/forgot-password"       element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/admin-login"           element={<AdminLogin />} />
+          <Route path="/events-browse"         element={<EventsBrowse />} />
+          <Route path="/events/:id"            element={<EventDetail />} />
+          <Route path="/my-tickets"            element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
+          <Route path="/org-dashboard"         element={<OrganizerRoute><OrgDashboard /></OrganizerRoute>} />
+          <Route path="/create-event"          element={<OrganizerRoute><CreateEvent /></OrganizerRoute>} />
+          <Route path="/edit-event/:id"        element={<OrganizerRoute><EditEvent /></OrganizerRoute>} />
+          <Route path="/scan-qr"               element={<OrganizerRoute><ScanQR /></OrganizerRoute>} />
+          <Route path="/admin"                 element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/profile"               element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="*"                      element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
     </div>
   );
 }

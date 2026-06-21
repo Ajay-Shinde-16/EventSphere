@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /org-dashboard
+Disallow: /scan-qr
+Disallow: /profile
+Disallow: /my-tickets
+Disallow: /create-event
+Disallow: /edit-event
+
+Sitemap: https://cdacb-eventsphere.vercel.app/sitemap.xml
