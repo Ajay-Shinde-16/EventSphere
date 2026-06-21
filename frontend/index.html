@@ -31,10 +31,14 @@
          what Lighthouse's "Render-blocking requests" flag was pointing at —
          a plain <link rel="stylesheet"> blocks first paint until it loads. -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'" />
+    <!-- Bootstrap Icons self-hosted (not loaded from jsdelivr CDN) so we
+         can set font-display:swap ourselves — the CDN's own file used
+         font-display:block, which Lighthouse flagged as a ~200ms render
+         delay. Self-hosting also means it loads from the same origin as
+         the page, with no extra DNS lookup to jsdelivr.net. -->
+    <link rel="stylesheet" href="/fonts/bootstrap-icons.css" />
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" />
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     </noscript>
     <!-- Razorpay's checkout.js is now loaded on-demand only on pages that
          actually need it (see EventDetail.jsx), instead of every page load —
