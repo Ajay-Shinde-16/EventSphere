@@ -61,7 +61,18 @@ export default function SplashScreen({ onDone }) {
     onDone();
   };
 
+  const hasRunRef = useRef(false);
+
   useEffect(() => {
+    // React.StrictMode (enabled in main.jsx) deliberately mounts every
+    // component twice in a row — mount, unmount, mount again — specifically
+    // to catch effects that aren't safely re-runnable. Without this guard,
+    // that double-mount could schedule two overlapping sets of timers and
+    // cleanup calls, which was the actual cause of the splash appearing to
+    // skip straight to the homepage instead of playing the animation.
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Respect reduced-motion preference: skip straight to a static
@@ -155,6 +166,7 @@ export default function SplashScreen({ onDone }) {
     T(() => {
       const layer = confettiLayerRef.current;
       if (!layer) return;
+      const pieces = [];
       for (let i = 0; i < 55; i++) {
         const piece = document.createElement('div');
         const color = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
@@ -167,14 +179,27 @@ export default function SplashScreen({ onDone }) {
         piece.style.height = `${size}px`;
         piece.style.background = color;
         piece.style.borderRadius = i % 2 ? '50%' : '1px';
-        piece.style.transition = 'transform 1.1s cubic-bezier(0.2,0.8,0.3,1), opacity 1.1s ease';
+        piece.style.opacity = '1';
+        piece.style.transform = 'translate(0,0) rotate(0deg)';
+        piece.style.transition = 'none'; // no transition yet — set AFTER the reflow below
         layer.appendChild(piece);
-        const angle = (i / 55) * Math.PI * 2;
-        requestAnimationFrame(() => {
-          piece.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist + 30}px) rotate(${Math.random() * 360}deg)`;
-          piece.style.opacity = '0';
-        });
+        pieces.push({ el: piece, angle: (i / 55) * Math.PI * 2, dist });
       }
+      // Force the browser to paint/register every piece at its starting
+      // position (center, opacity 1, no transform) BEFORE we turn the
+      // transition on and change the target values. Without this explicit
+      // reflow, the browser can collapse "create + immediately change" into
+      // a single frame with no visible animation — which is exactly what
+      // was happening: confetti pieces appeared and vanished instantly.
+      void layer.offsetHeight;
+      pieces.forEach(({ el, angle, dist }) => {
+        el.style.transition = 'transform 1.1s cubic-bezier(0.2,0.8,0.3,1), opacity 1.1s ease';
+        el.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist + 30}px) rotate(${Math.random() * 360}deg)`;
+        el.style.opacity = '0';
+      });
+      // Clean up the DOM nodes after their animation finishes so they
+      // don't linger invisibly in the tree.
+      T(() => pieces.forEach(({ el }) => el.remove()), 1300);
     }, confettiStart);
 
     // PHASE 5 — fade the whole splash out, revealing the homepage.
