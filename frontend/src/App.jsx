@@ -1,7 +1,8 @@
-import { useContext, useEffect, lazy, Suspense } from 'react';
+import { useContext, useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import SplashScreen from './components/SplashScreen';
 import Home from './pages/Home';
 
 // Code-split every other page so visiting the homepage (or any single page)
@@ -109,8 +110,26 @@ function AutoLogoutBanner() {
 }
 
 function AppShell() {
+  // Shown once per browser session (sessionStorage, not localStorage) —
+  // a fresh tab/visit sees it again, but navigating between pages or
+  // refreshing within the same session does not replay it.
+  const [showSplash, setShowSplash] = useState(() => {
+    const seen = sessionStorage.getItem('eventsphere_splash_seen');
+    console.log('[SPLASH DEBUG] sessionStorage value on init:', seen, '-> showSplash will be:', seen !== 'true');
+    return seen !== 'true';
+  });
+
+  console.log('[SPLASH DEBUG] AppShell render, showSplash =', showSplash);
+
+  const handleSplashDone = () => {
+    console.log('[SPLASH DEBUG] handleSplashDone called!');
+    sessionStorage.setItem('eventsphere_splash_seen', 'true');
+    setShowSplash(false);
+  };
+
   return (
     <div style={{ minHeight:'100vh' }}>
+      {showSplash && <SplashScreen onDone={handleSplashDone} />}
       <GlobalShortcuts />
       <AutoLogoutBanner />
       <Navbar />
