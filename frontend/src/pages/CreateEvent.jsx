@@ -282,7 +282,7 @@ Return ONLY a JSON object (no markdown, no explanation):
                       </div>
                     </div>
                     {tiers.length > 1 && (
-                      <button type="button" onClick={()=>removeTier(i)}
+                      <button type="button" onClick={()=>removeTier(i)} aria-label={`Remove ${tier.name || 'tier'}`}
                         style={{ width:36, height:36, borderRadius:10, background:'rgba(244,114,182,0.08)', border:'1px solid rgba(244,114,182,0.2)', color:'var(--pink)', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
                         <i className="bi bi-trash" style={{ fontSize:13 }}/>
                       </button>

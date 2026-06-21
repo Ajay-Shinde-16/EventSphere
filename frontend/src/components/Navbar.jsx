@@ -280,6 +280,7 @@ export default function Navbar() {
                       )}
                       <button
                         onClick={() => setNotifOpen(false)}
+                        aria-label="Close notifications"
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, padding: '2px 6px' }}
                       >✕</button>
                     </div>

@@ -103,7 +103,7 @@ function BroadcastModal({ event, onClose }) {
             <h3 style={{ fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:'1.05rem', color:'var(--heading)', display:'flex', alignItems:'center', gap:8 }}>
               <i className="bi bi-megaphone-fill" style={{ color:'var(--amber)' }}/>Message Attendees
             </h3>
-            <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--muted)', fontSize:18 }}>✕</button>
+            <button onClick={onClose} aria-label="Close" style={{ background:'none', border:'none', cursor:'pointer', color:'var(--muted)', fontSize:18 }}>✕</button>
           </div>
           <p style={{ fontSize:12, color:'var(--muted)', marginBottom:18 }}>Emails everyone with a confirmed ticket for <strong style={{ color:'var(--text)' }}>{event.title}</strong></p>
 
