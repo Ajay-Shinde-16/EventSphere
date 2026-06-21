@@ -110,20 +110,11 @@ function AutoLogoutBanner() {
 }
 
 function AppShell() {
-  // Shown once per browser session (sessionStorage, not localStorage) —
-  // a fresh tab/visit sees it again, but navigating between pages or
-  // refreshing within the same session does not replay it.
-  const [showSplash, setShowSplash] = useState(() => {
-    const seen = sessionStorage.getItem('eventsphere_splash_seen');
-    console.log('[SPLASH DEBUG] sessionStorage value on init:', seen, '-> showSplash will be:', seen !== 'true');
-    return seen !== 'true';
-  });
-
-  console.log('[SPLASH DEBUG] AppShell render, showSplash =', showSplash);
+  // Plays on every page load/refresh — no sessionStorage gating, so
+  // refreshing the browser shows the animation again each time.
+  const [showSplash, setShowSplash] = useState(true);
 
   const handleSplashDone = () => {
-    console.log('[SPLASH DEBUG] handleSplashDone called!');
-    sessionStorage.setItem('eventsphere_splash_seen', 'true');
     setShowSplash(false);
   };
 

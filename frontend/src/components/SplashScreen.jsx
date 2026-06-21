@@ -63,25 +63,17 @@ export default function SplashScreen({ onDone }) {
 
   const hasRunRef = useRef(false);
 
-  console.log('[SPLASH DEBUG] SplashScreen component function called/rendered');
-
   useEffect(() => {
-    console.log('[SPLASH DEBUG] useEffect fired. hasRunRef.current =', hasRunRef.current);
-
     // React.StrictMode (enabled in main.jsx) deliberately mounts every
     // component twice in a row — mount, unmount, mount again — specifically
     // to catch effects that aren't safely re-runnable. Without this guard,
     // that double-mount could schedule two overlapping sets of timers and
     // cleanup calls, which was the actual cause of the splash appearing to
     // skip straight to the homepage instead of playing the animation.
-    if (hasRunRef.current) {
-      console.log('[SPLASH DEBUG] Skipping - already ran once (StrictMode double-invoke)');
-      return;
-    }
+    if (hasRunRef.current) return;
     hasRunRef.current = true;
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    console.log('[SPLASH DEBUG] reduceMotion =', reduceMotion);
 
     // Respect reduced-motion preference: skip straight to a static
     // logo + message for ~1.4s, no spinning/flying/confetti at all.
