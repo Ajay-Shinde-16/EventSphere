@@ -315,7 +315,7 @@ function PublicHome() {
 
       {/* ── STATS BAR — Unique frosted glass style ── */}
       <section style={{ position:'relative', zIndex:1 }}>
-        <div style={{ maxWidth:960, margin:'0 auto', padding:'0 24px', display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap:12, paddingBottom:48 }}>
+        <div style={{ maxWidth:960, margin:'0 auto', padding:'0 24px', display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap:12, paddingTop: isMobile ? 28 : 40, paddingBottom:48 }}>
           {[
             { val:'500+',                     label:'Live Events',       icon:'bi-calendar-event-fill', color:'var(--cyan)'   },
             { val:liveCount.toLocaleString(), label:'Attendees Served',  icon:'bi-people-fill',         color:'var(--purple)' },
